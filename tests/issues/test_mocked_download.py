@@ -16,7 +16,7 @@ import yfinance.http.worker as yf_download_worker
 from yfinance.data import YfData
 from yfinance.scrapers.history import PriceHistory
 
-from ..close_candidates_support import call_private, require_dataframe
+from ..close_candidates_support import call_private, require_dataframe, require_datetime_index
 
 
 def _make_response(payload):
@@ -87,9 +87,13 @@ class TestIssue2557(unittest.TestCase):
 
         first = require_dataframe(first, "first concurrent yf.download() returned None")
         second = require_dataframe(second, "second concurrent yf.download() returned None")
+        first_index = require_datetime_index(first.index)
+        second_index = require_datetime_index(second.index)
+        first_dates = first_index.strftime("%Y-%m-%d").tolist()
+        second_dates = second_index.strftime("%Y-%m-%d").tolist()
 
-        self.assertEqual(str(first.index.min().date()), "2023-01-01")
-        self.assertEqual(str(second.index.min().date()), "2022-12-01")
+        self.assertEqual(first_dates[0], "2023-01-01")
+        self.assertEqual(second_dates[0], "2022-12-01")
         self.assertFalse(first.equals(second))
 
 
@@ -305,7 +309,7 @@ class TestIssue2353(unittest.TestCase):
         data = require_dataframe(data, "Ticker.history() returned None")
         self.assertEqual(len(data), 2, "partial bar must be dropped when keepna=False")
         self.assertFalse(
-            data[["Open", "High", "Low", "Close"]].isna().any(axis=None),
+            data[["Open", "High", "Low", "Close"]].isna().to_numpy().any(),
             "no NaN OHLC values should remain in the output",
         )
 
@@ -343,13 +347,15 @@ class TestIssue2353(unittest.TestCase):
         frame = require_dataframe(frame, "yf.download() returned None")
         self.assertFalse(frame.empty)
 
-        spy_close = frame["SPY"]["Close"]
-        qqq_close = frame["QQQ"]["Close"]
+        spy_frame = cast(pd.DataFrame, frame.xs("SPY", axis="columns", level=0))
+        qqq_frame = cast(pd.DataFrame, frame.xs("QQQ", axis="columns", level=0))
+        spy_close = cast(pd.Series, spy_frame["Close"])
+        qqq_close = cast(pd.Series, qqq_frame["Close"])
 
         self.assertEqual(len(spy_close.dropna()), 2)
         self.assertEqual(len(qqq_close.dropna()), 2)
 
-        qqq_open = frame["QQQ"]["Open"]
+        qqq_open = cast(pd.Series, qqq_frame["Open"])
         self.assertFalse(
             qqq_open.isna().any(),
             "QQQ must not expose the partial bar with NaN OHLC",

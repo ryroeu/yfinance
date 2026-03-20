@@ -227,7 +227,8 @@ class PriceHistory:
 
         if action_columns:
             actions = cast(pd.DataFrame, df[action_columns])
-            return cast(pd.DataFrame, actions[actions != 0].dropna(how="all").fillna(0))
+            non_zero_actions = actions.where(actions != 0)
+            return cast(pd.DataFrame, non_zero_actions.dropna(how="all").fillna(0))
         return pd.DataFrame(index=df.index.copy())
 
     def _resample_period_and_origin(self, target_interval, period, df_tz):
@@ -236,7 +237,7 @@ class PriceHistory:
             if period == "ytd":
                 _weekdays = ["MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]
                 year_start = pd.Timestamp(f"{_datetime.datetime.now().year}-01-01")
-                jan1_weekday = year_start.weekday()
+                jan1_weekday = int(year_start.weekday())
                 return f"W-{_weekdays[jan1_weekday]}", origin
             return "W-MON", origin
         if target_interval == "5d":
