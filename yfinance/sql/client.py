@@ -27,6 +27,7 @@ Access cache helpers directly::
 from typing import Any, Mapping, Sequence
 
 from yfinance.sql import cache, tables
+from yfinance.sql._db import delete_symbols as delete_symbols_from_db
 
 # ---------------------------------------------------------------------------
 # Tables
@@ -105,12 +106,19 @@ def populate_all(symbols: Sequence[str]) -> None:
         module.populate(symbols)
 
 
+def delete_symbols(symbols: Sequence[str]) -> None:
+    """Delete ticker rows across all protected SQL tables via the audited workflow."""
+
+    delete_symbols_from_db(symbols)
+
+
 # ---------------------------------------------------------------------------
 # Cache (re-exported for convenience)
 # ---------------------------------------------------------------------------
 
 __all__ = [
     "cache",
+    "delete_symbols",
     "fetch",
     "populate",
     "populate_all",

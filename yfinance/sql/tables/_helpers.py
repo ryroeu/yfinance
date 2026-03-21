@@ -1,13 +1,11 @@
 """Shared helpers for SQLite-backed quote-field modules."""
 
 import sqlite3
-from pathlib import Path
 from typing import Any, Callable, Collection, Dict, Mapping, Sequence
 
 import yfinance as yf
 from yfinance.exceptions import YFException
-
-DB_PATH = Path(__file__).parent / "yfinance.db"
+from yfinance.sql._db import get_connection
 
 Row = Dict[str, Any]
 Fetcher = Callable[[str], Row]
@@ -54,7 +52,7 @@ def save_row(table_name: str, symbol: str, data: Mapping[str, Any]) -> None:
         ON CONFLICT(symbol) DO UPDATE SET
         {updates}
     """
-    with sqlite3.connect(DB_PATH) as conn:
+    with get_connection() as conn:
         conn.execute(sql, [symbol] + list(data.values()))
 
 

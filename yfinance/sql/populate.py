@@ -21,15 +21,22 @@ Load symbols from a CSV file (first column used as symbol source)::
 Combine: refresh only one table from a CSV::
 
     python -m yfinance.sql.populate --table valuation --symbols-file symbols.csv
+
+Delete selected symbols across all protected ticker tables::
+
+    python -m yfinance.sql.populate --delete-symbols AAPL MSFT
+
+Delete selected symbols from a CSV file::
+
+    python -m yfinance.sql.populate --delete-symbols-file symbols.csv
 """
 
 import argparse
 import csv
-import sqlite3
 import sys
 
-from yfinance.sql.client import _TABLE_MODULES, populate, populate_all
-from yfinance.sql.tables._helpers import DB_PATH
+from yfinance.sql._db import get_connection
+from yfinance.sql.client import _TABLE_MODULES, delete_symbols, populate, populate_all
 
 _VALID_TABLES = list(_TABLE_MODULES.keys())
 
@@ -39,7 +46,7 @@ _VALID_TABLES = list(_TABLE_MODULES.keys())
 
 def _symbols_from_db() -> list[str]:
     """Return all symbols currently stored in the database (from fastInfo)."""
-    with sqlite3.connect(DB_PATH) as conn:
+    with get_connection() as conn:
         rows = conn.execute("SELECT symbol FROM fastInfo ORDER BY symbol").fetchall()
     return [row[0] for row in rows]
 
@@ -76,6 +83,17 @@ def _build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="CSV file whose first column contains ticker symbols.",
     )
+    symbol_group.add_argument(
+        "--delete-symbols",
+        nargs="+",
+        metavar="SYMBOL",
+        help="Delete one or more ticker symbols across all protected SQL tables.",
+    )
+    symbol_group.add_argument(
+        "--delete-symbols-file",
+        metavar="PATH",
+        help="CSV file whose first column contains ticker symbols to delete.",
+    )
 
     parser.add_argument(
         "--table",
@@ -94,6 +112,23 @@ def main(argv: list[str] | None = None) -> None:
     """Parse arguments and run the populate workflow."""
     parser = _build_parser()
     args = parser.parse_args(argv)
+
+    if args.delete_symbols or args.delete_symbols_file:
+        if args.table:
+            parser.error("--table cannot be used with delete options.")
+
+        if args.delete_symbols:
+            symbols = args.delete_symbols
+        else:
+            symbols = _symbols_from_csv(args.delete_symbols_file)
+            if not symbols:
+                print(f"No symbols found in {args.delete_symbols_file}", file=sys.stderr)
+                sys.exit(1)
+
+        print(f"Deleting {len(symbols)} symbol(s) from protected SQL tables...")
+        delete_symbols(symbols)
+        print("Done.")
+        return
 
     # Resolve symbols
     if args.symbols:
