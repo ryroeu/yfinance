@@ -104,15 +104,10 @@ def main() -> None:
             display(symbol, results)
 
             try:
-                action = input("Press Enter to return to menu, or 'b' for new symbol: ").strip().lower()
+                input("Press Enter to return to menu...")
             except (EOFError, KeyboardInterrupt):
                 print()
                 raise SystemExit(0)
-
-            if action in {"q", "quit", "exit"}:
-                raise SystemExit(0)
-            if action in {"b", "back"}:
-                break
 
 
 if __name__ == "__main__":
