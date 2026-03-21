@@ -2,40 +2,16 @@
 
 from __future__ import annotations
 
-import sqlite3
 import sys
-from importlib import import_module
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-TABLES = (
-    "fast_info",
-    "analyst_consensus",
-    "balance_sheet",
-    "company_profile",
-    "dividends",
-    "growth",
-    "profitability",
-    "valuation",
-)
-
-
-def _load_sql_client():
-    """Import the SQL client and the exception types used during fetches."""
-    sql_client = import_module("yfinance.sql.client")
-    yfinance_exceptions = import_module("yfinance.exceptions")
-    fetch_errors = (
-        sqlite3.Error,
-        KeyError,
-        TypeError,
-        ValueError,
-        RuntimeError,
-        yfinance_exceptions.YFException,
-    )
-    return sql_client, fetch_errors
+try:
+    from yfinance.sql.client import FETCH_ERRORS, SUPPORTED_TABLES, fetch
+except ModuleNotFoundError:
+    ROOT = Path(__file__).resolve().parents[1]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from yfinance.sql.client import FETCH_ERRORS, SUPPORTED_TABLES, fetch
 
 
 def display(symbol: str, results: dict) -> None:
@@ -60,8 +36,6 @@ def display(symbol: str, results: dict) -> None:
 
 def main() -> None:
     """Run the interactive CLI for fetching stock data by symbol."""
-    sql_client, fetch_errors = _load_sql_client()
-
     while True:
         try:
             raw = input("Enter stock symbol (or 'q' to quit): ").strip()
@@ -78,11 +52,11 @@ def main() -> None:
 
         print(f"\nFetching data for {symbol}...")
         results = {}
-        for table in TABLES:
+        for table in SUPPORTED_TABLES:
             try:
-                data = sql_client.fetch(table, symbol)
+                data = fetch(table, symbol)
                 results[table] = {"data": data}
-            except fetch_errors as e:
+            except FETCH_ERRORS as e:
                 results[table] = {"error": str(e)}
 
         display(symbol, results)

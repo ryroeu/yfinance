@@ -24,10 +24,12 @@ Access cache helpers directly::
     cache.lookup_timezone("America/New_York")
 """
 
+import sqlite3
 from typing import Any, Mapping, Sequence
 
 from yfinance.sql import cache, tables
 from yfinance.sql._db import delete_symbols as delete_symbols_from_db
+from yfinance.exceptions import YFException
 
 # ---------------------------------------------------------------------------
 # Tables
@@ -43,6 +45,16 @@ _TABLE_MODULES = {
     "profitability": tables.profitability,
     "valuation": tables.valuation,
 }
+
+SUPPORTED_TABLES = tuple(_TABLE_MODULES)
+FETCH_ERRORS = (
+    sqlite3.Error,
+    KeyError,
+    TypeError,
+    ValueError,
+    RuntimeError,
+    YFException,
+)
 
 
 def fetch(table: str, symbol: str) -> dict[str, Any]:
@@ -119,8 +131,10 @@ def delete_symbols(symbols: Sequence[str]) -> None:
 __all__ = [
     "cache",
     "delete_symbols",
+    "FETCH_ERRORS",
     "fetch",
     "populate",
     "populate_all",
     "save",
+    "SUPPORTED_TABLES",
 ]

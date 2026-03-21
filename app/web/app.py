@@ -2,41 +2,20 @@
 
 from __future__ import annotations
 
-import sqlite3
 import sys
-from importlib import import_module
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
-ROOT = Path(__file__).resolve().parents[2]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
-
-TABLES = (
-    "fast_info",
-    "analyst_consensus",
-    "balance_sheet",
-    "company_profile",
-    "dividends",
-    "growth",
-    "profitability",
-    "valuation",
-)
-
-sql_client = import_module("yfinance.sql.client")
-yfinance_exceptions = import_module("yfinance.exceptions")
-
-FETCH_ERRORS = (
-    sqlite3.Error,
-    KeyError,
-    TypeError,
-    ValueError,
-    RuntimeError,
-    yfinance_exceptions.YFException,
-)
+try:
+    from yfinance.sql.client import FETCH_ERRORS, SUPPORTED_TABLES, fetch
+except ModuleNotFoundError:
+    ROOT = Path(__file__).resolve().parents[2]
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0, str(ROOT))
+    from yfinance.sql.client import FETCH_ERRORS, SUPPORTED_TABLES, fetch
 
 app = FastAPI()
 app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
@@ -54,9 +33,9 @@ async def get_stock(symbol: str):
     """Return fetched stock data for all configured tables as JSON."""
     symbol = symbol.upper()
     results = {}
-    for table in TABLES:
+    for table in SUPPORTED_TABLES:
         try:
-            data = sql_client.fetch(table, symbol)
+            data = fetch(table, symbol)
             results[table] = {"status": "ok", "data": data}
         except FETCH_ERRORS as e:
             results[table] = {"status": "error", "error": str(e)}
