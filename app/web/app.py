@@ -44,12 +44,14 @@ app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), na
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
+    """Serve the main HTML page for the stock viewer."""
     html = (Path(__file__).parent / "templates" / "index.html").read_text()
     return HTMLResponse(content=html)
 
 
 @app.get("/api/stock/{symbol}")
 async def get_stock(symbol: str):
+    """Return fetched stock data for all configured tables as JSON."""
     symbol = symbol.upper()
     results = {}
     for table in TABLES:

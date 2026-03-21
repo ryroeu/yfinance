@@ -24,6 +24,7 @@ TABLES = (
 
 
 def _load_sql_client():
+    """Import the SQL client and the exception types used during fetches."""
     sql_client = import_module("yfinance.sql.client")
     yfinance_exceptions = import_module("yfinance.exceptions")
     fetch_errors = (
@@ -38,6 +39,7 @@ def _load_sql_client():
 
 
 def display(symbol: str, results: dict) -> None:
+    """Print fetched table data for a symbol in a readable console layout."""
     width = 60
     print()
     print("=" * width)
@@ -57,6 +59,7 @@ def display(symbol: str, results: dict) -> None:
 
 
 def main() -> None:
+    """Run the interactive CLI for fetching stock data by symbol."""
     sql_client, fetch_errors = _load_sql_client()
 
     while True:

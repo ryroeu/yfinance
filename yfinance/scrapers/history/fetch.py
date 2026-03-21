@@ -279,7 +279,7 @@ def _build_price_debug(state: _FetchState) -> None:
     state.intraday = state.params["interval"][-1] in ("m", "h")
     tz_for_debug = state.tz if state.tz is not None else "UTC"
     if state.start or state.period is None or cast(str, state.period).lower() == "max":
-        state.price_data_debug = f" ({state.params['interval']} "
+        state.price_data_debug = f" ({state.interval_user} "
         state.price_data_debug += _format_debug_boundary(
             state.start_user,
             state.start,
@@ -329,9 +329,10 @@ def _validate_chart_data(
         exception = YFPricesMissingError(state.price_history.ticker, state.price_data_debug)
         return _return_error_df(state, exception, clear_reconstruct=True)
     if isinstance(data.get("chart"), dict) and data["chart"].get("error"):
-        state.price_data_debug += (
-            ' (Yahoo error = "' + data["chart"]["error"]["description"] + '")'
-        )
+        error_desc = data["chart"]["error"]["description"]
+        if state.interval_user == "30m":
+            error_desc = error_desc.replace("15m", "30m")
+        state.price_data_debug += ' (Yahoo error = "' + error_desc + '")'
         exception = YFPricesMissingError(state.price_history.ticker, state.price_data_debug)
         return _return_error_df(state, exception, clear_reconstruct=True)
     if _missing_quote_payload(data):
