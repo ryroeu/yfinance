@@ -16,6 +16,28 @@ _FETCH_ERRORS = (sqlite3.Error, KeyError, TypeError, ValueError, YFException)
 _POPULATE_BATCH_SIZE = 1000
 _SHORT_BATCH_BREATHER_SECONDS = 120
 _LONG_BATCH_BREATHER_SECONDS = 300
+_TABLE_BATCH_SIZES = {
+    "analyst_consensus": 200,
+}
+_TABLE_FIXED_BREATHERS = {
+    "analyst_consensus": 30,
+}
+
+
+def _batch_size_for_label(label: str) -> int:
+    return _TABLE_BATCH_SIZES.get(label, _POPULATE_BATCH_SIZE)
+
+
+def _sleep_seconds_for_batch(label: str, batch_number: int) -> int:
+    fixed_breather = _TABLE_FIXED_BREATHERS.get(label)
+    if fixed_breather is not None:
+        return fixed_breather
+
+    return (
+        _LONG_BATCH_BREATHER_SECONDS
+        if batch_number % 2 == 0
+        else _SHORT_BATCH_BREATHER_SECONDS
+    )
 
 
 def fetch_info_fields(symbol: str, columns: Sequence[str]) -> Row:
@@ -69,9 +91,10 @@ def populate_symbols(
     """Fetch and store data for each symbol, logging recoverable errors."""
 
     total_symbols = len(symbols)
-    for batch_start in range(0, total_symbols, _POPULATE_BATCH_SIZE):
-        batch_number = (batch_start // _POPULATE_BATCH_SIZE) + 1
-        batch = symbols[batch_start : batch_start + _POPULATE_BATCH_SIZE]
+    batch_size = _batch_size_for_label(label)
+    for batch_start in range(0, total_symbols, batch_size):
+        batch_number = (batch_start // batch_size) + 1
+        batch = symbols[batch_start : batch_start + batch_size]
         batch_end = batch_start + len(batch)
 
         print(
@@ -85,11 +108,7 @@ def populate_symbols(
                 print(f"[{label}] {symbol}: {error}")
 
         if batch_end < total_symbols:
-            sleep_seconds = (
-                _LONG_BATCH_BREATHER_SECONDS
-                if batch_number % 2 == 0
-                else _SHORT_BATCH_BREATHER_SECONDS
-            )
+            sleep_seconds = _sleep_seconds_for_batch(label, batch_number)
             print(
                 f"[{label}] Batch {batch_number}: sleeping for "
                 f"{sleep_seconds} seconds before next batch"
