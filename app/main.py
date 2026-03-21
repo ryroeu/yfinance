@@ -52,7 +52,7 @@ def show_menu() -> list[str] | None:
     print("\nWhat would you like to see?")
     for key, (label, _) in _MENU_OPTIONS.items():
         print(f"  {key}. {label}")
-    print("  b. Enter new symbol")
+    print("  n. Enter new symbol")
     print("  q. Quit")
 
     while True:
@@ -64,7 +64,7 @@ def show_menu() -> list[str] | None:
 
         if choice in _MENU_OPTIONS:
             return _MENU_OPTIONS[choice][1]
-        if choice in {"b", "back"}:
+        if choice == "n":
             return None
         if choice in {"q", "quit", "exit"}:
             raise SystemExit(0)
