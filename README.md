@@ -73,11 +73,3 @@ intended for research and educational purposes. You should refer to Yahoo!'s ter
 [here](https://legal.yahoo.com/us/en/yahoo/terms/otos/index.html), and
 [here](https://policies.yahoo.com/us/en/yahoo/terms/index.htm)) for
 details on your rights to use the actual data downloaded.
-
----
-
-### P.S.
-
-Please drop me a note with any feedback you have.
-
-**Ran Aroussi**
