@@ -190,9 +190,10 @@ class ProgressBar:
         """Mark progress complete and render a final newline."""
         self.elapsed = min(self.elapsed, self.iterations)
         self.update_iteration(1)
-        print("\r" + str(self), end="", file=_sys.stderr)
-        _sys.stderr.flush()
-        print("", file=_sys.stderr)
+        if _sys.stderr is not None:
+            print("\r" + str(self), end="", file=_sys.stderr)
+            _sys.stderr.flush()
+            print("", file=_sys.stderr)
 
     def animate(self, iteration=None):
         """Advance progress by one step or a provided increment."""
@@ -202,8 +203,9 @@ class ProgressBar:
         else:
             self.elapsed += iteration
 
-        print("\r" + str(self), end="", file=_sys.stderr)
-        _sys.stderr.flush()
+        if _sys.stderr is not None:
+            print("\r" + str(self), end="", file=_sys.stderr)
+            _sys.stderr.flush()
         self.update_iteration()
 
     def update_iteration(self, val=None):

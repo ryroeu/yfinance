@@ -655,3 +655,97 @@ class TestIssue1863(unittest.TestCase):
         self.assertIsInstance(YFTzMissingError("T"), YFException)
         self.assertIsInstance(YFPricesMissingError("T", "debug"), Exception)
         self.assertIsInstance(YFTzMissingError("T"), Exception)
+
+
+class TestIssue1819(unittest.TestCase):
+    """Issue #1819 – ProgressBar raises AttributeError when sys.stderr is None.
+
+    On Windows, running a script without an attached console causes sys.stderr
+    to be None.  ProgressBar.animate() and ProgressBar.completed() previously
+    called _sys.stderr.flush() unconditionally, crashing with:
+        AttributeError: 'NoneType' object has no attribute 'flush'
+    """
+
+    def _make_minimal_chart_response(self):
+        """Return a minimal but valid chart payload for one ticker."""
+        return {
+            "chart": {
+                "result": [
+                    {
+                        "meta": {
+                            "currency": "USD",
+                            "symbol": "AAPL",
+                            "exchangeName": "NMS",
+                            "instrumentType": "EQUITY",
+                            "firstTradeDate": 345479400,
+                            "regularMarketTime": 1700000000,
+                            "gmtoffset": -18000,
+                            "timezone": "EST",
+                            "exchangeTimezoneName": "America/New_York",
+                            "regularMarketPrice": 150.0,
+                            "chartPreviousClose": 149.0,
+                            "dataGranularity": "1d",
+                            "range": "",
+                            "validRanges": ["1d", "5d", "1mo"],
+                        },
+                        "timestamp": [1699920000],
+                        "indicators": {
+                            "quote": [
+                                {
+                                    "open": [149.0],
+                                    "high": [151.0],
+                                    "low": [148.5],
+                                    "close": [150.0],
+                                    "volume": [75000000],
+                                }
+                            ],
+                            "adjclose": [{"adjclose": [150.0]}],
+                        },
+                    }
+                ],
+                "error": None,
+            }
+        }
+
+    def test_progress_bar_animate_tolerates_none_stderr(self):
+        """ProgressBar.animate() must not raise when sys.stderr is None."""
+        from yfinance.utils_doc import ProgressBar
+
+        bar = ProgressBar(3, "completed")
+        with patch("sys.stderr", None):
+            try:
+                bar.animate()
+                bar.animate()
+            except AttributeError as exc:
+                self.fail(f"ProgressBar.animate() raised AttributeError with stderr=None: {exc}")
+
+    def test_progress_bar_completed_tolerates_none_stderr(self):
+        """ProgressBar.completed() must not raise when sys.stderr is None."""
+        from yfinance.utils_doc import ProgressBar
+
+        bar = ProgressBar(3, "completed")
+        with patch("sys.stderr", None):
+            try:
+                bar.completed()
+            except AttributeError as exc:
+                self.fail(f"ProgressBar.completed() raised AttributeError with stderr=None: {exc}")
+
+    def test_download_with_progress_tolerates_none_stderr(self):
+        """yf.download() with progress=True must not raise when sys.stderr is None."""
+        payload = self._make_minimal_chart_response()
+        response = Mock(status_code=200)
+        response.text = json.dumps(payload)
+        response.json.return_value = payload
+
+        with (
+            patch("yfinance.data.YfData.get", return_value=response),
+            patch("yfinance.data.YfData.cache_get", return_value=response),
+            patch("sys.stderr", None),
+        ):
+            try:
+                result = yfinance_pkg.download("AAPL", period="1d", progress=True)
+            except AttributeError as exc:
+                self.fail(
+                    f"download() with progress=True raised AttributeError with stderr=None: {exc}"
+                )
+        self.assertIsNotNone(result)
