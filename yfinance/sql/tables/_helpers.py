@@ -14,7 +14,8 @@ Saver = Callable[[str, Mapping[str, Any]], None]
 
 _FETCH_ERRORS = (sqlite3.Error, KeyError, TypeError, ValueError, YFException)
 _POPULATE_BATCH_SIZE = 1000
-_POPULATE_BATCH_BREATHER_SECONDS = 120
+_SHORT_BATCH_BREATHER_SECONDS = 120
+_LONG_BATCH_BREATHER_SECONDS = 300
 
 
 def fetch_info_fields(symbol: str, columns: Sequence[str]) -> Row:
@@ -84,11 +85,16 @@ def populate_symbols(
                 print(f"[{label}] {symbol}: {error}")
 
         if batch_end < total_symbols:
+            sleep_seconds = (
+                _LONG_BATCH_BREATHER_SECONDS
+                if batch_number % 2 == 0
+                else _SHORT_BATCH_BREATHER_SECONDS
+            )
             print(
                 f"[{label}] Batch {batch_number}: sleeping for "
-                f"{_POPULATE_BATCH_BREATHER_SECONDS} seconds before next batch"
+                f"{sleep_seconds} seconds before next batch"
             )
-            time.sleep(_POPULATE_BATCH_BREATHER_SECONDS)
+            time.sleep(sleep_seconds)
 
 
 def build_info_fetcher(columns: Sequence[str], docstring: str) -> Fetcher:
