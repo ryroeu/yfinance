@@ -27,8 +27,15 @@ def _as_multi_index(index: _pd.Index) -> _pd.MultiIndex:
     return index
 
 
-def _index_dates(index: _pd.Index) -> _np.ndarray:
+def _to_exchange_index(index: _pd.Index, tz_name: str | None = None) -> _pd.DatetimeIndex:
     dt_index = _as_datetime_index(index)
+    if tz_name is not None and dt_index.tz is not None:
+        dt_index = dt_index.tz_convert(tz_name)
+    return dt_index
+
+
+def _index_dates(index: _pd.Index, tz_name: str | None = None) -> _np.ndarray:
+    dt_index = _to_exchange_index(index, tz_name)
     return _np.array([ts.date() for ts in dt_index], dtype=object)
 
 
@@ -246,8 +253,9 @@ class TestPriceHistory(unittest.TestCase):
         tkrs = ["BHP.AX", "IMP.JO", "BP.L", "PNL.L", "INTC"]
         test_run = False
         for tkr in tkrs:
+            dat = yf.Ticker(tkr, session=self.session)
             start_d = _dt.date.today() - _dt.timedelta(days=59)
-            df_daily = yf.Ticker(tkr, session=self.session).history(
+            df_daily = dat.history(
                 start=start_d,
                 end=None,
                 interval="1d",
@@ -259,7 +267,7 @@ class TestPriceHistory(unittest.TestCase):
 
             start_d = _first_index_date(df_daily_divs.index)
             end_d = _last_index_date(df_daily_divs.index) + _dt.timedelta(days=1)
-            df_intraday = yf.Ticker(tkr, session=self.session).history(
+            df_intraday = dat.history(
                 start=start_d,
                 end=end_d,
                 interval="15m",
@@ -267,11 +275,12 @@ class TestPriceHistory(unittest.TestCase):
             )
             self.assertTrue((df_intraday["Dividends"] != 0.0).any())
 
+            tz_name = _ticker_timezone(dat)
             df_intraday_divs = cast(
                 _pd.Series,
                 df_intraday["Dividends"][df_intraday["Dividends"] != 0],
             )
-            intraday_div_index = _as_datetime_index(df_intraday_divs.index)
+            intraday_div_index = _to_exchange_index(df_intraday_divs.index, tz_name)
             df_intraday_divs.index = _pd.to_datetime([dt.date() for dt in intraday_div_index])
             daily_div_dates = _pd.to_datetime(
                 [dt.date() for dt in _as_datetime_index(df_daily_divs.index)]
@@ -291,8 +300,9 @@ class TestPriceHistory(unittest.TestCase):
         tase_tkrs = ["ICL.TA", "ESLT.TA", "ONE.TA", "MGDL.TA"]
         test_run = False
         for tkr in tase_tkrs:
+            dat = yf.Ticker(tkr, session=self.session)
             start_d = _dt.date.today() - _dt.timedelta(days=59)
-            df_daily = yf.Ticker(tkr, session=self.session).history(
+            df_daily = dat.history(
                 start=start_d,
                 end=None,
                 interval="1d",
@@ -304,7 +314,7 @@ class TestPriceHistory(unittest.TestCase):
 
             start_d = _first_index_date(df_daily_divs.index)
             end_d = _last_index_date(df_daily_divs.index) + _dt.timedelta(days=1)
-            df_intraday = yf.Ticker(tkr, session=self.session).history(
+            df_intraday = dat.history(
                 start=start_d,
                 end=end_d,
                 interval="15m",
@@ -312,11 +322,12 @@ class TestPriceHistory(unittest.TestCase):
             )
             self.assertTrue((df_intraday["Dividends"] != 0.0).any())
 
+            tz_name = _ticker_timezone(dat)
             df_intraday_divs = cast(
                 _pd.Series,
                 df_intraday["Dividends"][df_intraday["Dividends"] != 0],
             )
-            intraday_div_index = _as_datetime_index(df_intraday_divs.index)
+            intraday_div_index = _to_exchange_index(df_intraday_divs.index, tz_name)
             df_intraday_divs.index = _pd.to_datetime([dt.date() for dt in intraday_div_index])
             daily_div_dates = _pd.to_datetime(
                 [dt.date() for dt in _as_datetime_index(df_daily_divs.index)]
@@ -547,6 +558,7 @@ class TestPriceHistoryAdditional(unittest.TestCase):
         special_day = _dt.date(2025, 11, 28)  # Thanksgiving 2025
         time_early_close = _dt.time(13)
         dat = yf.Ticker(tkr, session=self.session)
+        tz_name = _ticker_timezone(dat)
 
         start_d = special_day - _dt.timedelta(days=7)
         end_d = special_day + _dt.timedelta(days=7)
@@ -557,7 +569,9 @@ class TestPriceHistoryAdditional(unittest.TestCase):
             prepost=False,
             keepna=True,
         )
-        tg_last_dt = df.loc[str(special_day)].index[-1]
+        df_local = df.copy()
+        df_local.index = _to_exchange_index(df.index, tz_name)
+        tg_last_dt = df_local.loc[str(special_day)].index[-1]
         self.assertTrue(tg_last_dt.time() < time_early_close)
 
         start_d = _dt.date(special_day.year, 1, 1)
@@ -574,8 +588,10 @@ class TestPriceHistoryAdditional(unittest.TestCase):
                 "TEST NEEDS UPDATE: 'special_day' should be the latest "
                 "Thanksgiving date."
             )
-        df_dates = _index_dates(df.index)
-        last_dts = _pd.Series(df.index).groupby(df_dates).last()
+        df_local = df.copy()
+        df_local.index = _to_exchange_index(df.index, tz_name)
+        df_dates = _index_dates(df_local.index)
+        last_dts = _pd.Series(df_local.index).groupby(df_dates).last()
         dfd = dat.history(
             start=start_d,
             end=end_d,
@@ -586,7 +602,7 @@ class TestPriceHistoryAdditional(unittest.TestCase):
         self.assertTrue(
             _np.equal(
                 _index_dates(dfd.index),
-                _index_dates(_pd.to_datetime(last_dts.index)),
+                _np.array([cast(_pd.Timestamp, ts).date() for ts in last_dts], dtype=object),
             ).all()
         )
 
@@ -594,6 +610,7 @@ class TestPriceHistoryAdditional(unittest.TestCase):
         """Ensure ASX intraday sessions are not over-pruned."""
         tkr = "BHP.AX"
         dat = yf.Ticker(tkr, session=self.session)
+        tz_name = _ticker_timezone(dat)
 
         end_d = _dt.date.today() - _dt.timedelta(days=1)
         start_d = end_d - _dt.timedelta(days=180)
@@ -606,8 +623,10 @@ class TestPriceHistoryAdditional(unittest.TestCase):
         )
         if df.empty or not hasattr(df.index, "date"):
             self.skipTest("No 1h data available for BHP.AX in this date range")
-        df_dates = _index_dates(df.index)
-        last_dts = _pd.Series(df.index).groupby(df_dates).last()
+        df_local = df.copy()
+        df_local.index = _to_exchange_index(df.index, tz_name)
+        df_dates = _index_dates(df_local.index)
+        last_dts = _pd.Series(df_local.index).groupby(df_dates).last()
         dfd = dat.history(
             start=start_d,
             end=end_d,
@@ -618,7 +637,7 @@ class TestPriceHistoryAdditional(unittest.TestCase):
         self.assertTrue(
             _np.equal(
                 _index_dates(dfd.index),
-                _index_dates(_pd.to_datetime(last_dts.index)),
+                _np.array([cast(_pd.Timestamp, ts).date() for ts in last_dts], dtype=object),
             ).all()
         )
 
