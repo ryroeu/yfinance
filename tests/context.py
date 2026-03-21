@@ -6,7 +6,7 @@ import sys
 
 import platformdirs as _ad
 
-import yfinance.client as yfinance
+from yfinance.cache import set_tz_cache_location
 # from requests_ratelimiter import LimiterSession
 # from pyrate_limiter import Duration, RequestRate, Limiter
 
@@ -20,7 +20,7 @@ sys.path.insert(0, _src_dp)
 
 # Use adjacent cache folder for testing, delete if already exists and older than today
 testing_cache_dirpath = os.path.join(_ad.user_cache_dir(), "py-yfinance-testing")
-yfinance.set_tz_cache_location(testing_cache_dirpath)
+set_tz_cache_location(testing_cache_dirpath)
 if os.path.isdir(testing_cache_dirpath):
     mtime = _dt.datetime.fromtimestamp(os.path.getmtime(testing_cache_dirpath))
     if mtime.date() < _dt.date.today():
