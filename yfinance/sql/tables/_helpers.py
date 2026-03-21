@@ -1,6 +1,7 @@
 """Shared helpers for SQLite-backed quote-field modules."""
 
 import sqlite3
+import time
 from typing import Any, Callable, Collection, Dict, Mapping, Sequence
 
 import yfinance as yf
@@ -12,6 +13,8 @@ Fetcher = Callable[[str], Row]
 Saver = Callable[[str, Mapping[str, Any]], None]
 
 _FETCH_ERRORS = (sqlite3.Error, KeyError, TypeError, ValueError, YFException)
+_POPULATE_BATCH_SIZE = 1000
+_POPULATE_BATCH_BREATHER_SECONDS = 120
 
 
 def fetch_info_fields(symbol: str, columns: Sequence[str]) -> Row:
@@ -64,11 +67,28 @@ def populate_symbols(
 ) -> None:
     """Fetch and store data for each symbol, logging recoverable errors."""
 
-    for symbol in symbols:
-        try:
-            save(symbol, fetch(symbol))
-        except _FETCH_ERRORS as error:
-            print(f"[{label}] {symbol}: {error}")
+    total_symbols = len(symbols)
+    for batch_start in range(0, total_symbols, _POPULATE_BATCH_SIZE):
+        batch_number = (batch_start // _POPULATE_BATCH_SIZE) + 1
+        batch = symbols[batch_start : batch_start + _POPULATE_BATCH_SIZE]
+        batch_end = batch_start + len(batch)
+
+        print(
+            f"[{label}] Batch {batch_number}: processing symbols "
+            f"{batch_start + 1}-{batch_end} of {total_symbols}"
+        )
+        for symbol in batch:
+            try:
+                save(symbol, fetch(symbol))
+            except _FETCH_ERRORS as error:
+                print(f"[{label}] {symbol}: {error}")
+
+        if batch_end < total_symbols:
+            print(
+                f"[{label}] Batch {batch_number}: sleeping for "
+                f"{_POPULATE_BATCH_BREATHER_SECONDS} seconds before next batch"
+            )
+            time.sleep(_POPULATE_BATCH_BREATHER_SECONDS)
 
 
 def build_info_fetcher(columns: Sequence[str], docstring: str) -> Fetcher:
