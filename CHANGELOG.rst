@@ -1,6 +1,13 @@
 Change Log
 ===========
 
+2.0.0
+-----
+- Major refactor, with some breaking changes. 
+- New features:
+  
+
+
 1.2.0
 -----
 Features:
