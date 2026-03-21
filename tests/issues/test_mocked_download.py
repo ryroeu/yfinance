@@ -11,13 +11,15 @@ import unittest
 from unittest.mock import Mock, patch
 
 import pandas as pd
+import requests
 import yfinance as yfinance_pkg
 import yfinance.client as yf
 import yfinance.http.worker as yf_download_worker
 from yfinance.config import YF_CONFIG
 from yfinance.data import YfData
-from yfinance.exceptions import YFPricesMissingError, YFTzMissingError
+from yfinance.exceptions import YFException, YFPricesMissingError, YFTzMissingError
 from yfinance.scrapers.history import PriceHistory
+from yfinance.utils_doc import ProgressBar
 
 from ..close_candidates_support import call_private, require_dataframe, require_datetime_index
 
@@ -649,8 +651,6 @@ class TestIssue1863(unittest.TestCase):
 
     def test_exception_hierarchy_is_catchable_as_base_yf_exception(self):
         """YFPricesMissingError and YFTzMissingError must be catchable as YFException."""
-        from yfinance.exceptions import YFException
-
         self.assertIsInstance(YFPricesMissingError("T", "debug"), YFException)
         self.assertIsInstance(YFTzMissingError("T"), YFException)
         self.assertIsInstance(YFPricesMissingError("T", "debug"), Exception)
@@ -709,24 +709,20 @@ class TestIssue1819(unittest.TestCase):
 
     def test_progress_bar_animate_tolerates_none_stderr(self):
         """ProgressBar.animate() must not raise when sys.stderr is None."""
-        from yfinance.utils_doc import ProgressBar
-
-        bar = ProgressBar(3, "completed")
+        progress_bar = ProgressBar(3, "completed")
         with patch("sys.stderr", None):
             try:
-                bar.animate()
-                bar.animate()
+                progress_bar.animate()
+                progress_bar.animate()
             except AttributeError as exc:
                 self.fail(f"ProgressBar.animate() raised AttributeError with stderr=None: {exc}")
 
     def test_progress_bar_completed_tolerates_none_stderr(self):
         """ProgressBar.completed() must not raise when sys.stderr is None."""
-        from yfinance.utils_doc import ProgressBar
-
-        bar = ProgressBar(3, "completed")
+        progress_bar = ProgressBar(3, "completed")
         with patch("sys.stderr", None):
             try:
-                bar.completed()
+                progress_bar.completed()
             except AttributeError as exc:
                 self.fail(f"ProgressBar.completed() raised AttributeError with stderr=None: {exc}")
 
@@ -749,3 +745,130 @@ class TestIssue1819(unittest.TestCase):
                     f"download() with progress=True raised AttributeError with stderr=None: {exc}"
                 )
         self.assertIsNotNone(result)
+
+
+class TestIssue1797(unittest.TestCase):
+    """Issue #1797 – download() returns 'No price data found' due to network/cookie failure.
+
+    The original report: ``yf.download('AAPL', start='2019-01-01', end='2021-06-12')``
+    silently produced "No price data found, symbol may be delisted" on some machines
+    (particularly those behind geographic restrictions or proxies that block Yahoo's
+    cookie endpoint).  The same call worked on other machines/Kaggle, so the ticker
+    itself was not delisted — the failure was a network-layer cookie acquisition error.
+
+    A follow-up comment asked whether ``raise_errors=True`` works with ``download()``;
+    the original library had no such parameter for ``download()``.
+
+    Our fork resolves both concerns:
+      1. ``requests.exceptions.ConnectionError`` (and the broader
+         ``requests.exceptions.RequestException`` family) is in
+         ``_RECOVERABLE_EXCEPTIONS``, so a cookie/network failure during ``download()``
+         returns an empty DataFrame and logs the error instead of crashing or producing a
+         misleading "symbol may be delisted" message with no network context.
+      2. The cookie strategy includes a basic → CSRF fallback, reducing the chance that a
+         single endpoint failure blocks the entire request.
+      3. The ``raise_on_error`` config flag gives callers programmatic error control
+         (``download()`` itself still returns empty + logs by design, matching the
+         documented bulk-download contract).
+      4. Passing an unknown keyword argument like ``raise_errors=True`` to ``download()``
+         raises a clear ``TypeError`` instead of being silently ignored.
+    """
+
+    def tearDown(self):
+        YF_CONFIG.debug.raise_on_error = False
+
+    # ------------------------------------------------------------------
+    # Core scenario: ConnectionError during start/end download
+    # ------------------------------------------------------------------
+
+    def test_download_returns_empty_dataframe_on_connection_error(self):
+        """A ConnectionError during cookie/crumb fetch must return empty DataFrame, not crash."""
+        with (
+            patch.object(
+                yf_download_worker,
+                "get_ticker_tz",
+                side_effect=requests.exceptions.ConnectionError(
+                    "Failed to establish a new connection: [Errno -2] Name or service not known"
+                ),
+            ),
+            self.assertLogs("yfinance", level="ERROR"),
+        ):
+            result = yf.download(
+                "AAPL",
+                start="2019-01-01",
+                end="2021-06-12",
+                progress=False,
+                threads=False,
+            )
+
+        self.assertIsInstance(result, pd.DataFrame, "download() must return a DataFrame")
+        result_frame = cast(pd.DataFrame, result)
+        self.assertTrue(
+            result_frame.empty,
+            "download() must return an empty DataFrame on network error",
+        )
+
+    def test_download_logs_ticker_on_connection_error(self):
+        """A ConnectionError during download() must be logged with the ticker symbol."""
+        with (
+            patch.object(
+                yf_download_worker,
+                "get_ticker_tz",
+                side_effect=requests.exceptions.ConnectionError("Max retries exceeded"),
+            ),
+            self.assertLogs("yfinance", level="ERROR") as log_capture,
+        ):
+            yf.download(
+                "AAPL",
+                start="2019-01-01",
+                end="2021-06-12",
+                progress=False,
+                threads=False,
+            )
+
+        self.assertTrue(
+            any("AAPL" in record for record in log_capture.output),
+            "The failed ticker symbol must appear in the logged error output",
+        )
+
+    def test_download_does_not_write_connection_error_to_raw_stderr(self):
+        """A ConnectionError during download() must not be written directly to sys.stderr."""
+        captured_stderr = io.StringIO()
+
+        with (
+            patch.object(
+                yf_download_worker,
+                "get_ticker_tz",
+                side_effect=requests.exceptions.ConnectionError("Max retries exceeded"),
+            ),
+            patch("sys.stderr", captured_stderr),
+            self.assertLogs("yfinance", level="ERROR"),
+        ):
+            yf.download(
+                "AAPL",
+                start="2019-01-01",
+                end="2021-06-12",
+                progress=False,
+                threads=False,
+            )
+
+        raw_stderr = captured_stderr.getvalue()
+        self.assertFalse(
+            any("Failed download" in line for line in raw_stderr.splitlines()),
+            f"Error must not be written via raw print() to stderr; got: {raw_stderr!r}",
+        )
+
+    # ------------------------------------------------------------------
+    # raise_errors keyword — must be rejected cleanly, not silently ignored
+    # ------------------------------------------------------------------
+
+    def test_download_rejects_unknown_raise_errors_kwarg(self):
+        """Passing raise_errors=True (not a valid download() param) must raise TypeError."""
+        with self.assertRaises(TypeError):
+            yf.download(
+                "AAPL",
+                start="2019-01-01",
+                end="2021-06-12",
+                raise_errors=True,
+                progress=False,
+            )
