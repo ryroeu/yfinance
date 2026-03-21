@@ -1,18 +1,23 @@
-"""Compatibility wrapper for valuation SQL table operations."""
+"""SQLite helpers for valuation-related quote fields."""
 
-from yfinance.fetchers import valuation as fetcher
-from yfinance.sql._table_runtime import populate_table, save_row
+from ._helpers import build_info_fetcher, build_populator, build_saver
 
-fetch = fetcher.fetch
-
-
-def save(symbol, data):
-    """Upsert valuation data for a symbol into the local database."""
-
-    save_row(fetcher.TABLE_NAME, symbol, data)
-
-
-def populate(symbols):
-    """Fetch and store valuation data for each symbol provided."""
-
-    populate_table(symbols, fetch, fetcher.TABLE_NAME, fetcher.TABLE_LABEL)
+_COLUMNS = [
+    "trailingPE", "forwardPE", "priceToBook", "priceToSalesTrailing12Months",
+    "pegRatio", "trailingPegRatio", "enterpriseValue",
+    "enterpriseToEbitda", "enterpriseToRevenue",
+]
+fetch = build_info_fetcher(
+    _COLUMNS,
+    "Fetch valuation fields for a symbol from Yahoo Finance.",
+)
+save = build_saver(
+    "valuation",
+    "Upsert valuation data for a symbol into the local database.",
+)
+populate = build_populator(
+    fetch,
+    save,
+    "valuation",
+    "Fetch and store valuation data for each symbol provided.",
+)

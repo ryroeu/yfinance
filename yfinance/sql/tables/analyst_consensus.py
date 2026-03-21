@@ -1,18 +1,23 @@
-"""Compatibility wrapper for analyst-consensus SQL table operations."""
+"""SQLite helpers for analyst-consensus quote fields."""
 
-from yfinance.fetchers import analyst_consensus as fetcher
-from yfinance.sql._table_runtime import populate_table, save_row
+from ._helpers import build_info_fetcher, build_populator, build_saver
 
-fetch = fetcher.fetch
-
-
-def save(symbol, data):
-    """Upsert analyst-consensus data for a symbol into the local database."""
-
-    save_row(fetcher.TABLE_NAME, symbol, data)
-
-
-def populate(symbols):
-    """Fetch and store analyst-consensus data for each symbol provided."""
-
-    populate_table(symbols, fetch, fetcher.TABLE_NAME, fetcher.TABLE_LABEL)
+_COLUMNS = [
+    "targetMeanPrice", "targetMedianPrice", "targetHighPrice",
+    "targetLowPrice", "recommendationKey",
+    "numberOfAnalystOpinions",
+]
+fetch = build_info_fetcher(
+    _COLUMNS,
+    "Fetch analyst-consensus fields for a symbol from Yahoo Finance.",
+)
+save = build_saver(
+    "analystConsensus",
+    "Upsert analyst-consensus data for a symbol into the local database.",
+)
+populate = build_populator(
+    fetch,
+    save,
+    "analyst_consensus",
+    "Fetch and store analyst-consensus data for each symbol provided.",
+)

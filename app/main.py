@@ -6,7 +6,6 @@ import sqlite3
 import sys
 from importlib import import_module
 from pathlib import Path
-from types import ModuleType
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -24,9 +23,9 @@ TABLES = (
 )
 
 
-def _load_fetchers() -> tuple[ModuleType, tuple[type[Exception], ...]]:
-    """Import the fetcher package and the exception types used during fetches."""
-    fetchers = import_module("yfinance.fetchers")
+def _load_sql_client():
+    """Import the SQL client and the exception types used during fetches."""
+    sql_client = import_module("yfinance.sql.client")
     yfinance_exceptions = import_module("yfinance.exceptions")
     fetch_errors = (
         sqlite3.Error,
@@ -36,7 +35,7 @@ def _load_fetchers() -> tuple[ModuleType, tuple[type[Exception], ...]]:
         RuntimeError,
         yfinance_exceptions.YFException,
     )
-    return fetchers, fetch_errors
+    return sql_client, fetch_errors
 
 
 def display(symbol: str, results: dict) -> None:
@@ -61,7 +60,7 @@ def display(symbol: str, results: dict) -> None:
 
 def main() -> None:
     """Run the interactive CLI for fetching stock data by symbol."""
-    fetchers, fetch_errors = _load_fetchers()
+    sql_client, fetch_errors = _load_sql_client()
 
     while True:
         try:
@@ -81,8 +80,7 @@ def main() -> None:
         results = {}
         for table in TABLES:
             try:
-                fetcher = getattr(fetchers, table)
-                data = fetcher.fetch(symbol)
+                data = sql_client.fetch(table, symbol)
                 results[table] = {"data": data}
             except fetch_errors as e:
                 results[table] = {"error": str(e)}
