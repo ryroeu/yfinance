@@ -34,11 +34,48 @@ def display(symbol: str, results: dict) -> None:
     print()
 
 
+_MENU_OPTIONS = {
+    "1": ("Show All", list(SUPPORTED_TABLES)),
+    "2": ("Fast Info", ["fast_info"]),
+    "3": ("Analyst Consensus", ["analyst_consensus"]),
+    "4": ("Balance Sheet", ["balance_sheet"]),
+    "5": ("Company Profile", ["company_profile"]),
+    "6": ("Dividends", ["dividends"]),
+    "7": ("Growth", ["growth"]),
+    "8": ("Profitability", ["profitability"]),
+    "9": ("Valuation", ["valuation"]),
+}
+
+
+def show_menu() -> list[str] | None:
+    """Display the data menu and return the selected table list, or None to re-enter symbol."""
+    print("\nWhat would you like to see?")
+    for key, (label, _) in _MENU_OPTIONS.items():
+        print(f"  {key}. {label}")
+    print("  b. Back (enter new symbol)")
+    print("  q. Quit")
+
+    while True:
+        try:
+            choice = input("\nSelect an option: ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return None
+
+        if choice in _MENU_OPTIONS:
+            return _MENU_OPTIONS[choice][1]
+        if choice in {"b", "back"}:
+            return None
+        if choice in {"q", "quit", "exit"}:
+            raise SystemExit(0)
+        print("  Invalid choice, please try again.")
+
+
 def main() -> None:
     """Run the interactive CLI for fetching stock data by symbol."""
     while True:
         try:
-            raw = input("Enter stock symbol (or 'q' to quit): ").strip()
+            raw = input("\nEnter stock symbol (or 'q' to quit): ").strip()
         except (EOFError, KeyboardInterrupt):
             print()
             break
@@ -50,9 +87,13 @@ def main() -> None:
         if not symbol:
             continue
 
+        tables_to_fetch = show_menu()
+        if tables_to_fetch is None:
+            continue
+
         print(f"\nFetching data for {symbol}...")
         results = {}
-        for table in SUPPORTED_TABLES:
+        for table in tables_to_fetch:
             try:
                 data = fetch(table, symbol)
                 results[table] = {"data": data}
