@@ -87,20 +87,32 @@ def main() -> None:
         if not symbol:
             continue
 
-        tables_to_fetch = show_menu()
-        if tables_to_fetch is None:
-            continue
+        while True:
+            tables_to_fetch = show_menu()
+            if tables_to_fetch is None:
+                break
 
-        print(f"\nFetching data for {symbol}...")
-        results = {}
-        for table in tables_to_fetch:
+            print(f"\nFetching data for {symbol}...")
+            results = {}
+            for table in tables_to_fetch:
+                try:
+                    data = fetch(table, symbol)
+                    results[table] = {"data": data}
+                except FETCH_ERRORS as e:
+                    results[table] = {"error": str(e)}
+
+            display(symbol, results)
+
             try:
-                data = fetch(table, symbol)
-                results[table] = {"data": data}
-            except FETCH_ERRORS as e:
-                results[table] = {"error": str(e)}
+                action = input("Press Enter to return to menu, or 'b' for new symbol: ").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print()
+                raise SystemExit(0)
 
-        display(symbol, results)
+            if action in {"q", "quit", "exit"}:
+                raise SystemExit(0)
+            if action in {"b", "back"}:
+                break
 
 
 if __name__ == "__main__":
