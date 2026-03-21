@@ -12,7 +12,7 @@ E.g.:
 
 .. code-block:: bash
 
-   pip install git+https://github.com/ranaroussi/yfinance.git@feature/name
+   pip install git+https://github.com/ryroeu/yfinance.git@feature/name
 
 With Git
 --------

@@ -40,14 +40,14 @@ Creating your branch
       git pull
       git checkout -b {your branch}
 
-4. Make your changes, commit them, and push your branch to GitHub. To keep the commit history and `network graph <https://github.com/ranaroussi/yfinance/network>`_ compact, give your commits a very short summary then description:
+4. Make your changes, commit them, and push your branch to GitHub. To keep the commit history and `network graph <https://github.com/ryroeu/yfinance/network>`_ compact, give your commits a very short summary then description:
 
    .. code-block:: bash
 
       git commit -m "short sentence summary" -m "full commit message"
       # Long message can be multiple lines (tip: copy-paste)
 
-6. `Open a pull request on Github <https://github.com/ranaroussi/yfinance/pulls>`_.
+6. `Open a pull request on Github <https://github.com/ryroeu/yfinance/pulls>`_.
 
 Running a branch
 ----------------

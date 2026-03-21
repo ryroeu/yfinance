@@ -14,8 +14,8 @@ sys.path.insert(0, os.path.abspath('../..'))
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 PROJECT = 'yfinance / Pythonic access to market data'
-COPYRIGHT = '2017-2025 Ran Aroussi'
-AUTHOR = 'Ran Aroussi'
+COPYRIGHT = 'ryroeu 2026'
+AUTHOR = 'ryroeu'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -42,7 +42,7 @@ autodoc_default_options = {
 HTML_TITLE = 'yfinance'
 HTML_THEME = 'pydata_sphinx_theme'
 html_theme_options = {
-    "github_url": "https://github.com/ranaroussi/yfinance",
+    "github_url": "https://github.com/ryroeu/yfinance",
     "navbar_align": "left",
     "logo": {
       "image_light": "_static/logo-light.webp",

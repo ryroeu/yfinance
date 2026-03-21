@@ -24,7 +24,9 @@ Install
 
 .. code-block:: bash
 
-    $ pip install yfinance
+    $ git clone https://github.com/ryroeu/yfinance
+    $ cd yfinance
+    $ pip install -e .
 
 Quick start
 -----------
