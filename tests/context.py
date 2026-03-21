@@ -1,18 +1,21 @@
 """Shared test context and cache setup."""
 
 import datetime as _dt
+import importlib
 import os
 import sys
 
 import platformdirs as _ad
 
-from yfinance.cache import set_tz_cache_location
-# from requests_ratelimiter import LimiterSession
-# from pyrate_limiter import Duration, RequestRate, Limiter
-
 _parent_dp = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 _src_dp = _parent_dp
 sys.path.insert(0, _src_dp)
+
+yfinance = importlib.import_module("yfinance")
+set_tz_cache_location = importlib.import_module("yfinance.cache").set_tz_cache_location
+
+# from requests_ratelimiter import LimiterSession
+# from pyrate_limiter import Duration, RequestRate, Limiter
 
 # Optional: see the exact requests that are made during tests:
 # import logging
