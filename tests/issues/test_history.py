@@ -230,12 +230,12 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
         on 2020-01-02 AAPL daily data.
         """
         ticker = yf.Ticker("AAPL", session=self.session)
-        kwargs = dict(
-            start="2020-01-02",
-            end="2020-01-10",
-            interval="1d",
-            auto_adjust=False,
-        )
+        kwargs = {
+            "start": "2020-01-02",
+            "end": "2020-01-10",
+            "interval": "1d",
+            "auto_adjust": False,
+        }
 
         baseline = ticker.history(**kwargs)
         self.assertIsInstance(baseline, pd.DataFrame)
