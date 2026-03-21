@@ -2,6 +2,7 @@
 
 import concurrent.futures
 import datetime
+import io
 import json
 import threading
 import time
@@ -13,7 +14,9 @@ import pandas as pd
 import yfinance as yfinance_pkg
 import yfinance.client as yf
 import yfinance.http.worker as yf_download_worker
+from yfinance.config import YF_CONFIG
 from yfinance.data import YfData
+from yfinance.exceptions import YFPricesMissingError, YFTzMissingError
 from yfinance.scrapers.history import PriceHistory
 
 from ..close_candidates_support import call_private, require_dataframe, require_datetime_index
@@ -512,3 +515,143 @@ class TestIssue2327(unittest.TestCase):
             history_idx.equals(download_idx),
             "history() and download() must produce identical UTC timestamps",
         )
+
+
+class TestIssue1863(unittest.TestCase):
+    """Verify download failures use the logging framework instead of raw stderr writes.
+
+    The original issue reported that yfinance printed error messages directly to
+    sys.stderr via print() rather than raising exceptions or using the logging
+    framework.  Consuming applications could not suppress or redirect these
+    messages, and libraries that wrap yfinance (e.g. pandas_datareader) would
+    have their output polluted unexpectedly.
+
+    Our fork addresses this by:
+      - routing all error reporting through Python's logging framework
+      - raising typed exceptions (YFPricesMissingError, YFTzMissingError, …)
+        from the single-ticker Ticker.history() path
+      - collecting per-ticker failures in download() via manager.errors and
+        logging them, never calling print(…, file=sys.stderr) for errors
+    """
+
+    _EMPTY_CHART_PAYLOAD = {
+        "chart": {
+            "result": None,
+            "error": None,
+        }
+    }
+
+    def tearDown(self):
+        YF_CONFIG.debug.raise_on_error = False
+
+    # ------------------------------------------------------------------
+    # download() — bulk path
+    # ------------------------------------------------------------------
+
+    def test_download_failure_routes_error_through_logging_not_raw_stderr(self):
+        """A failed ticker in download() must emit its error via logger.error, not print."""
+        captured_stderr = io.StringIO()
+
+        with (
+            patch.object(
+                yf_download_worker,
+                "get_ticker_tz",
+                side_effect=YFTzMissingError("AACI"),
+            ),
+            patch("sys.stderr", captured_stderr),
+            self.assertLogs("yfinance", level="ERROR") as log_capture,
+        ):
+            yf.download("AACI", period="1mo", progress=False, threads=False)
+
+        raw_stderr_output = captured_stderr.getvalue()
+        self.assertFalse(
+            any("Failed download" in line for line in raw_stderr_output.splitlines()),
+            "Error message must not be written to stderr via raw print(); "
+            f"got: {raw_stderr_output!r}",
+        )
+        self.assertTrue(
+            any("AACI" in record for record in log_capture.output),
+            "Error message must appear in the yfinance logger output",
+        )
+
+    def test_download_returns_empty_dataframe_on_ticker_failure(self):
+        """download() must return an empty DataFrame when all tickers fail, not raise."""
+        with patch.object(
+            yf_download_worker,
+            "get_ticker_tz",
+            side_effect=YFTzMissingError("AACI"),
+        ):
+            with self.assertLogs("yfinance", level="ERROR"):
+                result = yf.download("AACI", period="1mo", progress=False, threads=False)
+
+        result = require_dataframe(result, "download() must return a DataFrame, not None")
+        self.assertTrue(result.empty, "download() must return an empty DataFrame on failure")
+
+    # ------------------------------------------------------------------
+    # Ticker.history() — single-ticker path
+    # ------------------------------------------------------------------
+
+    def test_history_raises_typed_exception_for_missing_price_data(self):
+        """Ticker.history() must raise YFPricesMissingError when raise_on_error is set."""
+        YF_CONFIG.debug.raise_on_error = True
+
+        ticker = yf.Ticker("AACI")
+        with patch.object(ticker, "_get_ticker_tz", return_value="America/New_York"):
+            history_obj = call_private(ticker, "_lazy_load_price_history")
+        client = history_obj.get_data_client()
+
+        response = Mock(status_code=200)
+        response.text = json.dumps(self._EMPTY_CHART_PAYLOAD)
+        response.json.return_value = self._EMPTY_CHART_PAYLOAD
+
+        with (
+            patch.object(client, "get", return_value=response),
+            patch.object(client, "cache_get", return_value=response),
+        ):
+            with self.assertRaises(YFPricesMissingError):
+                history_obj.history(period="1mo", interval="1d", auto_adjust=False)
+
+    def test_history_logs_error_without_raw_stderr_when_raise_on_error_disabled(self):
+        """Ticker.history() must log the failure via the logging framework, not raw print."""
+        YF_CONFIG.debug.raise_on_error = False
+
+        ticker = yf.Ticker("AACI")
+        with patch.object(ticker, "_get_ticker_tz", return_value="America/New_York"):
+            history_obj = call_private(ticker, "_lazy_load_price_history")
+        client = history_obj.get_data_client()
+
+        response = Mock(status_code=200)
+        response.text = json.dumps(self._EMPTY_CHART_PAYLOAD)
+        response.json.return_value = self._EMPTY_CHART_PAYLOAD
+
+        captured_stderr = io.StringIO()
+
+        with (
+            patch.object(client, "get", return_value=response),
+            patch.object(client, "cache_get", return_value=response),
+            patch("sys.stderr", captured_stderr),
+            self.assertLogs("yfinance", level="ERROR") as log_capture,
+        ):
+            result = history_obj.history(period="1mo", interval="1d", auto_adjust=False)
+
+        raw_stderr_output = captured_stderr.getvalue()
+        self.assertFalse(
+            any("no price data" in line for line in raw_stderr_output.splitlines()),
+            "Error must not be written via raw print() to stderr; "
+            f"got: {raw_stderr_output!r}",
+        )
+        self.assertTrue(
+            any("AACI" in record for record in log_capture.output),
+            "Error must appear in the yfinance logger output",
+        )
+        self.assertIsNotNone(result, "history() must return a DataFrame, not None")
+        self.assertTrue(result.empty, "history() must return empty DataFrame on failure")
+
+    def test_exception_hierarchy_is_catchable_as_base_yf_exception(self):
+        """YFPricesMissingError and YFTzMissingError must be catchable as YFException."""
+        from yfinance.exceptions import YFException
+
+        self.assertIsInstance(YFPricesMissingError("T", "debug"), YFException)
+        self.assertIsInstance(YFTzMissingError("T"), YFException)
+        self.assertIsInstance(YFPricesMissingError("T", "debug"), Exception)
+        self.assertIsInstance(YFTzMissingError("T"), Exception)
