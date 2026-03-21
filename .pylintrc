@@ -1,3 +1,6 @@
 [DESIGN]
 max-attributes=20
 max-public-methods=45
+
+[MESSAGES CONTROL]
+disable=duplicate-code

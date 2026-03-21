@@ -26,22 +26,24 @@ Access cache helpers directly::
 
 from typing import Any, Mapping, Sequence
 
-from yfinance.sql import cache, tables
+from yfinance import fetchers
+from yfinance.sql import cache
 from yfinance.sql._db import delete_symbols as delete_symbols_from_db
+from yfinance.sql._table_runtime import populate_table, save_row
 
 # ---------------------------------------------------------------------------
 # Tables
 # ---------------------------------------------------------------------------
 
 _TABLE_MODULES = {
-    "analyst_consensus": tables.analyst_consensus,
-    "balance_sheet": tables.balance_sheet,
-    "company_profile": tables.company_profile,
-    "dividends": tables.dividends,
-    "fast_info": tables.fast_info,
-    "growth": tables.growth,
-    "profitability": tables.profitability,
-    "valuation": tables.valuation,
+    "analyst_consensus": fetchers.analyst_consensus,
+    "balance_sheet": fetchers.balance_sheet,
+    "company_profile": fetchers.company_profile,
+    "dividends": fetchers.dividends,
+    "fast_info": fetchers.fast_info,
+    "growth": fetchers.growth,
+    "profitability": fetchers.profitability,
+    "valuation": fetchers.valuation,
 }
 
 
@@ -77,7 +79,7 @@ def save(table: str, symbol: str, data: Mapping[str, Any]) -> None:
         Column-value mapping to store.
     """
     module = _TABLE_MODULES[table]
-    module.save(symbol, data)
+    save_row(module.TABLE_NAME, symbol, data)
 
 
 def populate(table: str, symbols: Sequence[str]) -> None:
@@ -91,7 +93,7 @@ def populate(table: str, symbols: Sequence[str]) -> None:
         Sequence of ticker symbols.
     """
     module = _TABLE_MODULES[table]
-    module.populate(symbols)
+    populate_table(symbols, module.fetch, module.TABLE_NAME, module.TABLE_LABEL)
 
 
 def populate_all(symbols: Sequence[str]) -> None:
@@ -103,7 +105,7 @@ def populate_all(symbols: Sequence[str]) -> None:
         Sequence of ticker symbols.
     """
     for module in _TABLE_MODULES.values():
-        module.populate(symbols)
+        populate_table(symbols, module.fetch, module.TABLE_NAME, module.TABLE_LABEL)
 
 
 def delete_symbols(symbols: Sequence[str]) -> None:

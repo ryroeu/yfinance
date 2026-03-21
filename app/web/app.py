@@ -6,6 +6,7 @@ import sqlite3
 import sys
 from importlib import import_module
 from pathlib import Path
+from types import ModuleType
 
 from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, JSONResponse
@@ -26,9 +27,15 @@ TABLES = (
     "valuation",
 )
 
-sql_client = import_module("yfinance.sql.client")
 yfinance_exceptions = import_module("yfinance.exceptions")
 
+
+def _load_fetchers() -> ModuleType:
+    """Import the fetcher package used by the web app."""
+    return import_module("yfinance.fetchers")
+
+
+fetchers = _load_fetchers()
 FETCH_ERRORS = (
     sqlite3.Error,
     KeyError,
@@ -56,7 +63,8 @@ async def get_stock(symbol: str):
     results = {}
     for table in TABLES:
         try:
-            data = sql_client.fetch(table, symbol)
+            fetcher = getattr(fetchers, table)
+            data = fetcher.fetch(symbol)
             results[table] = {"status": "ok", "data": data}
         except FETCH_ERRORS as e:
             results[table] = {"status": "error", "error": str(e)}
