@@ -52,7 +52,7 @@ def show_menu() -> list[str] | None:
     print("\nWhat would you like to see?")
     for key, (label, _) in _MENU_OPTIONS.items():
         print(f"  {key}. {label}")
-    print("  b. Back (enter new symbol)")
+    print("  b. Enter new symbol")
     print("  q. Quit")
 
     while True:
@@ -105,10 +105,9 @@ def main() -> None:
 
             try:
                 input("Press Enter to return to menu...")
-            except (EOFError, KeyboardInterrupt):
+            except (EOFError, KeyboardInterrupt) as exc:
                 print()
-                raise SystemExit(0)
-
+                raise SystemExit(0) from exc
 
 if __name__ == "__main__":
     main()
