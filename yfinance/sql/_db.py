@@ -6,6 +6,16 @@ from typing import Iterable, Sequence
 
 DB_PATH = Path(__file__).parent / "yfinance.db"
 
+_ANALYST_CONSENSUS_COLUMNS = (
+    "symbol",
+    "targetMeanPrice",
+    "targetMedianPrice",
+    "targetHighPrice",
+    "targetLowPrice",
+    "recommendationKey",
+    "numberOfAnalystOpinions",
+)
+
 PROTECTED_TABLES = (
     "analystConsensus",
     "balanceSheet",
@@ -27,6 +37,19 @@ _DELETE_ORDER = (
     "valuation",
     "fastInfo",
 )
+
+_ANALYST_CONSENSUS_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS analystConsensus (
+        symbol TEXT PRIMARY KEY,
+        targetMeanPrice REAL,
+        targetMedianPrice REAL,
+        targetHighPrice REAL,
+        targetLowPrice REAL,
+        recommendationKey TEXT,
+        numberOfAnalystOpinions INTEGER,
+        FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
+    )
+"""
 
 _SCHEMA_STATEMENTS = (
     """
@@ -54,19 +77,7 @@ _SCHEMA_STATEMENTS = (
         tenDayAverageVolume INTEGER
     )
     """,
-    """
-    CREATE TABLE IF NOT EXISTS analystConsensus (
-        symbol TEXT PRIMARY KEY,
-        targetMeanPrice REAL,
-        targetMedianPrice REAL,
-        targetHighPrice REAL,
-        targetLowPrice REAL,
-        recommendationKey TEXT,
-        recommendationRating REAL,
-        numberOfAnalystOpinions INTEGER,
-        FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
-    )
-    """,
+    _ANALYST_CONSENSUS_SCHEMA,
     """
     CREATE TABLE IF NOT EXISTS balanceSheet (
         symbol TEXT PRIMARY KEY,
@@ -189,11 +200,37 @@ def _trigger_sql(table_name: str) -> str:
     """
 
 
+def _table_columns(conn: sqlite3.Connection, table_name: str) -> tuple[str, ...]:
+    rows = conn.execute(f"PRAGMA table_info({table_name})").fetchall()
+    return tuple(row[1] for row in rows)
+
+
+def _migrate_analyst_consensus_schema(conn: sqlite3.Connection) -> None:
+    columns = _table_columns(conn, "analystConsensus")
+    if "recommendationRating" not in columns:
+        return
+
+    conn.execute("DROP TRIGGER IF EXISTS protect_delete_analystConsensus")
+    conn.execute("ALTER TABLE analystConsensus RENAME TO analystConsensus_old")
+    conn.execute(_ANALYST_CONSENSUS_SCHEMA)
+
+    column_list = ", ".join(_ANALYST_CONSENSUS_COLUMNS)
+    conn.execute(
+        f"""
+        INSERT INTO analystConsensus ({column_list})
+        SELECT {column_list}
+        FROM analystConsensus_old
+        """
+    )
+    conn.execute("DROP TABLE analystConsensus_old")
+
+
 def ensure_schema(conn: sqlite3.Connection) -> None:
     """Create the SQLite schema and protection triggers if needed."""
 
     for statement in _SCHEMA_STATEMENTS:
         conn.execute(statement)
+    _migrate_analyst_consensus_schema(conn)
     for table_name in PROTECTED_TABLES:
         conn.execute(_trigger_sql(table_name))
 

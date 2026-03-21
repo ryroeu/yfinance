@@ -4,7 +4,7 @@ from ._helpers import build_info_fetcher, build_populator, build_saver
 
 _COLUMNS = [
     "targetMeanPrice", "targetMedianPrice", "targetHighPrice",
-    "targetLowPrice", "recommendationKey", "recommendationRating",
+    "targetLowPrice", "recommendationKey",
     "numberOfAnalystOpinions",
 ]
 fetch = build_info_fetcher(
