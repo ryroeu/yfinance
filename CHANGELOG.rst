@@ -3,9 +3,77 @@ Change Log
 
 2.0.0
 -----
-- Major refactor, with some breaking changes. 
-- New features:
-  
+
+Breaking Changes:
+- Removed deprecated ``raise_errors`` parameter from ``download()`` and ``Ticker.history()``; use ``yf.config.debug.raise_on_error = True`` instead
+- Renamed internal ``hide_exceptions`` flag to ``raise_on_error`` (inverted polarity: ``False`` = log, ``True`` = raise)
+
+Refactor (Major):
+- Split monolithic history module into dedicated submodules: ``history/fetch``, ``history/flow``, ``history/helpers``, ``history/price_repair``, ``history/repair_workflows``, ``history/dividend_repair``, ``history/split_repair``, ``history/capital_gains``, ``history/reconstruct``
+- Split utility code into focused modules: ``utils_doc``, ``utils_financial``, ``utils_price``, ``fundamentals_keys``
+- Reorganized ticker test helpers: ``ticker_core_cases``, ``ticker_financial_cases``, ``ticker_info_cases``, ``ticker_support``
+- Centralized HTTP/session stack into ``http`` module with unified cookie, crumb, proxy, and retry handling
+- ``download()`` now creates a per-call ``DownloadManager`` instead of sharing process-global state, fixing thread-safety (#2557)
+- Moved thread-safety control for ``raise_on_error`` to ``_download_all_tickers`` dispatcher so worker threads only read, never write, the global config
+
+Fixes:
+- ``cache.py:set_cache_location()`` — reset ``_TzCacheManager``, ``_CookieCacheManager``, and ``_ISINCacheManager`` singletons to prevent stale closed-DB connections (``peewee.OperationalError``)
+- ``tests/test_cache.py:tearDownClass`` — restore original cache location before cleanup to prevent test pollution
+- ``scrapers/history/client.py`` — handle DST-ambiguous timestamps (e.g. Israeli stocks on ``ESLT.TA``) with ``try/except`` fallback using ``pd.Timestamp.tz_localize(ambiguous=True)``
+- ``scrapers/funds.py`` — use ``.get()`` with empty-dict fallback for ``topHoldings``/``fundProfile`` keys; add explicit ``YFDataException`` for non-ETF/MUTUALFUND tickers
+- ``setup.py`` — add ``lxml>=4.9.1`` to ``install_requires`` (required by ``pd.read_html()``)
+- ``utils.py`` — fix pandas deprecation warning from ``pd.Timedelta('1d')`` by normalising interval string case
+- ``utils.py:safe_merge_dfs`` — remove ``_interval_to_timedelta_strict`` wrapper that incorrectly rejected ``relativedelta`` for day/week/month intervals
+- ``fetch.py:_slice_actions_to_window`` — fix tz-naive empty ``DatetimeIndex`` being sliced with tz-aware start date
+- ``utils_price.py:safe_merge_dfs_impl`` — return early when ``df_sub`` is empty to prevent column-overlap error on ``df_main.join(df_sub)``
+- ``multi.py`` — fix thread-safety race condition where worker threads mutated and restored global ``hide_exceptions``, causing concurrent threads to corrupt each other's saved state
+- ``utils_doc.py:ProgressBar`` — guard against ``sys.stderr is None`` before writing/flushing (Windows headless environments) (#1819)
+- ``fast_info`` — missing metadata keys (``currency``, ``instrumentType``, ``exchangeName``, etc.) now return ``None`` instead of raising ``KeyError`` (#1951)
+- Cookie handlers — reject ``401 Unauthorized`` crumb responses instead of caching the JSON error body as the next crumb (#2495)
+- Cookie expiry — read ``expires`` attribute directly off stored cookie object instead of hardcoded 24-hour age check (#2082)
+- Cookie/network — ``fc.yahoo.com`` DNS failures, timeouts, and connection errors now fall through to the CSRF cookie fallback strategy (#1924, #1804, #1765)
+- Proxy — centralized proxy flow for SOCKS dictionaries; ``yf.config.network.verify`` exposed and forwarded through all request paths (#1811, #1852)
+- Proxy — callable proxy providers supported in ``yf.config``; single-URL proxies normalized to both schemes (#2500)
+- Error handling — replaced ``print(..., file=sys.stderr)`` with proper exception hierarchy (``YFException``, ``YFPricesMissingError``, ``YFTzMissingError``, ``YFRateLimitError``) and Python logging (#1863)
+- History — ``period='max'`` now drops partial in-progress bars where all four OHLC columns are ``NaN`` regardless of ``Volume`` (#2353)
+- History — ``history()`` intraday index now converted to UTC before returning, matching ``download()`` output (#2327)
+- History — ``period`` + ``start``/``end`` argument combinations now resolved correctly (#1813, #1115)
+- History — ``1mo``/``3mo`` intervals return populated recent rows through current date (#1895)
+- History — 30m interval error messages no longer expose internal 15m rewrite to callers (#1029)
+- History — intraday ``2m`` on 60-day periods no longer raises internal event-merge ``IndexError`` (#1718)
+- History — weekly resampling now uses calendar-aligned ``W-XXX`` bins
+- Prices — repeated identical ``history()`` calls on the same ``Ticker`` object now return bit-for-bit identical float values (#1871)
+- Prices — ``auto_adjust=True`` and ``auto_adjust=False`` produce consistent output between ``history()`` and ``download()`` (#860)
+- Prices — unsorted dividend events from Yahoo are now sorted before merge, preventing dropped dividends (#930)
+- Prices — mixed-timezone ``download()`` with ``ignore_tz=False`` no longer crashes; index normalized with ``pd.to_datetime(utc=True)`` (#1820)
+- ``info`` — ``currentPrice`` falls back to ``regularMarketPrice`` for ETFs and ``.L`` suffixed tickers (#1855, #1518)
+- ``info`` — ``forwardPE`` and ``pegRatio`` refreshed from Yahoo key-statistics page when omitted from quote-summary (#2570, #2426)
+- ``info`` — ``priceToBook`` returns correct currency-consistent value for Indian tickers (#2593)
+- Fundamentals — quarterly balance sheet exposes additional schema keys (``Fixed Maturity Investments``, ``Equity Investments``, etc.) (#2605)
+- Fundamentals — ``earnings_estimate`` now exposes ``earningsCurrency`` column from Yahoo ``earningsTrend`` payload (#2699)
+- Domain — ``yf.Sector``/``yf.Industry`` forward non-US region through domain fetch path (#2601)
+- ISIN — lookup now scores candidates against Yahoo ``symbol``/``shortName``/``longName`` and queries exact ticker symbol before broad fallback (#610)
+- Options — expiration list is stable across repeated calls (#469)
+- ``download()`` — ``DatetimeIndex`` preserved when combining tickers where one returns no data (#1382, #515)
+- ``download()`` — no longer emits ``datetime.utcfromtimestamp()`` deprecation warning (#1801)
+- Deprecated ``pandas._libs.properties.tz`` access eliminated; all ``.tz`` accesses use public pandas API (#2118)
+
+Test Coverage:
+- New issue-specific verification modules: ``tests/issues/test.py``, ``tests/issues/test_history.py``, ``tests/issues/test_fast_info.py``, ``tests/issues/test_mocked.py``, ``tests/issues/test_mocked_download.py``, ``tests/issues/test_mocked_earnings_dates.py``
+- ``tests/test_ticker.py:load_tests`` rewritten as direct imports so pytest discovers previously-skipped ticker tests
+- Dynamic rolling date windows replace hardcoded 2024 dates in intraday tests
+- 116 passed, 71 subtests passed (full suite); 176 tests via ``unittest discover`` (``OK, skipped=1``)
+
+Code Quality:
+- All Python source passes ``pylint 10/10`` and zero ``pyright`` errors
+- Extensive syntax remediation across all modules
+- Exports updated in ``__init__`` files
+- ``requirements.txt`` updated
+
+Issues Confirmed Resolved:
+#445, #469, #515, #521, #610, #860, #930, #1029, #1115, #1272, #1327, #1333, #1382, #1518, #1718, #1765, #1797, #1801, #1804, #1811, #1813, #1819, #1820, #1852, #1855, #1863, #1871, #1876, #1895, #1924, #1951, #1957, #2044, #2082, #2118, #2146, #2261, #2327, #2333, #2348, #2350, #2353, #2360, #2387, #2426, #2463, #2495, #2500, #2526, #2557, #2570, #2593, #2601, #2605, #2670, #2688, #2699
+
+
 
 
 1.2.0
