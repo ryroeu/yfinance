@@ -3,7 +3,7 @@
 from ._helpers import build_info_fetcher, build_populator, build_saver
 
 _COLUMNS = [
-    "revenueGrowth", "revenueQuarterlyGrowth", "earningsGrowth",
+    "revenueGrowth", "earningsGrowth",
     "earningsQuarterlyGrowth", "epsTrailingTwelveMonths", "epsForward",
 ]
 fetch = build_info_fetcher(

@@ -16,11 +16,20 @@ _FETCH_ERRORS = (sqlite3.Error, KeyError, TypeError, ValueError, YFException)
 _POPULATE_BATCH_SIZE = 1000
 _SHORT_BATCH_BREATHER_SECONDS = 120
 _LONG_BATCH_BREATHER_SECONDS = 300
+_INFO_TABLE_LABELS = (
+    "analyst_consensus",
+    "balance_sheet",
+    "company_profile",
+    "dividends",
+    "growth",
+    "profitability",
+    "valuation",
+)
 _TABLE_BATCH_SIZES = {
-    "analyst_consensus": 200,
+    **{label: 25 for label in _INFO_TABLE_LABELS},
 }
 _TABLE_FIXED_BREATHERS = {
-    "analyst_consensus": 30,
+    **{label: 60 for label in _INFO_TABLE_LABELS},
 }
 
 

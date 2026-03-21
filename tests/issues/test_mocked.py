@@ -643,7 +643,7 @@ class TestIssue2570(unittest.TestCase):
         <html><body>
           <section data-testid=\"qsp-statistics\">
             <table>
-              <tr><td>PEG Ratio (5 yr expected)</td><td>2.21</td></tr>
+              <tr><td>PEG Ratio (5yr expected)</td><td>2.21</td></tr>
             </table>
           </section>
         </body></html>
@@ -705,7 +705,7 @@ class TestIssue2570(unittest.TestCase):
         <html><body>
           <section data-testid=\"qsp-statistics\">
             <table>
-              <tr><td>PEG Ratio (5 yr expected)</td><td>2.21</td></tr>
+              <tr><td>PEG Ratio (5yr expected)</td><td>2.21</td></tr>
             </table>
           </section>
         </body></html>
@@ -767,7 +767,7 @@ class TestIssue2570(unittest.TestCase):
         <html><body>
           <section data-testid=\"qsp-statistics\">
             <table>
-              <tr><td>PEG Ratio (5 yr expected)</td><td>N/A</td></tr>
+              <tr><td>PEG Ratio (5yr expected)</td><td>N/A</td></tr>
             </table>
           </section>
         </body></html>
@@ -919,7 +919,7 @@ class TestIssue2426(unittest.TestCase):
           <section data-testid="qsp-statistics">
             <table>
               <tr><td>Forward P/E</td><td>63.29</td></tr>
-              <tr><td>PEG Ratio (5 yr expected)</td><td>2.21</td></tr>
+              <tr><td>PEG Ratio (5yr expected)</td><td>2.21</td></tr>
             </table>
           </section>
         </body></html>

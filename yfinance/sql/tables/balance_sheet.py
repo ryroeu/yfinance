@@ -3,7 +3,7 @@
 from ._helpers import build_info_fetcher, build_populator, build_saver
 
 _COLUMNS = [
-    "totalCash", "totalDebt", "netDebt", "totalAssets",
+    "totalCash", "totalDebt",
     "debtToEquity", "currentRatio", "quickRatio", "bookValue",
 ]
 fetch = build_info_fetcher(

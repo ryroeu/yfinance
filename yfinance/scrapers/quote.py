@@ -807,7 +807,7 @@ class Quote:
 
         key_statistics_values = self._scrape_key_statistics_values(
             {
-                "pegRatio": "PEG Ratio (5 yr expected)",
+                "pegRatio": "PEG Ratio (5yr expected)",
                 "forwardPE": "Forward P/E",
             }
         )

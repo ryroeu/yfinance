@@ -16,6 +16,25 @@ _ANALYST_CONSENSUS_COLUMNS = (
     "numberOfAnalystOpinions",
 )
 
+_BALANCE_SHEET_COLUMNS = (
+    "symbol",
+    "totalCash",
+    "totalDebt",
+    "debtToEquity",
+    "currentRatio",
+    "quickRatio",
+    "bookValue",
+)
+
+_GROWTH_COLUMNS = (
+    "symbol",
+    "revenueGrowth",
+    "earningsGrowth",
+    "earningsQuarterlyGrowth",
+    "epsTrailingTwelveMonths",
+    "epsForward",
+)
+
 PROTECTED_TABLES = (
     "analystConsensus",
     "balanceSheet",
@@ -51,6 +70,31 @@ _ANALYST_CONSENSUS_SCHEMA = """
     )
 """
 
+_BALANCE_SHEET_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS balanceSheet (
+        symbol TEXT PRIMARY KEY,
+        totalCash REAL,
+        totalDebt REAL,
+        debtToEquity REAL,
+        currentRatio REAL,
+        quickRatio REAL,
+        bookValue REAL,
+        FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
+    )
+"""
+
+_GROWTH_SCHEMA = """
+    CREATE TABLE IF NOT EXISTS growth (
+        symbol TEXT PRIMARY KEY,
+        revenueGrowth REAL,
+        earningsGrowth REAL,
+        earningsQuarterlyGrowth REAL,
+        epsTrailingTwelveMonths REAL,
+        epsForward REAL,
+        FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
+    )
+"""
+
 _SCHEMA_STATEMENTS = (
     """
     CREATE TABLE IF NOT EXISTS fastInfo (
@@ -78,20 +122,7 @@ _SCHEMA_STATEMENTS = (
     )
     """,
     _ANALYST_CONSENSUS_SCHEMA,
-    """
-    CREATE TABLE IF NOT EXISTS balanceSheet (
-        symbol TEXT PRIMARY KEY,
-        totalCash REAL,
-        totalDebt REAL,
-        netDebt REAL,
-        totalAssets REAL,
-        debtToEquity REAL,
-        currentRatio REAL,
-        quickRatio REAL,
-        bookValue REAL,
-        FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
-    )
-    """,
+    _BALANCE_SHEET_SCHEMA,
     """
     CREATE TABLE IF NOT EXISTS companyProfile (
         symbol TEXT PRIMARY KEY,
@@ -119,18 +150,7 @@ _SCHEMA_STATEMENTS = (
         FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
     )
     """,
-    """
-    CREATE TABLE IF NOT EXISTS growth (
-        symbol TEXT PRIMARY KEY,
-        revenueGrowth REAL,
-        revenueQuarterlyGrowth REAL,
-        earningsGrowth REAL,
-        earningsQuarterlyGrowth REAL,
-        epsTrailingTwelveMonths REAL,
-        epsForward REAL,
-        FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
-    )
-    """,
+    _GROWTH_SCHEMA,
     """
     CREATE TABLE IF NOT EXISTS profitability (
         symbol TEXT PRIMARY KEY,
@@ -225,12 +245,55 @@ def _migrate_analyst_consensus_schema(conn: sqlite3.Connection) -> None:
     conn.execute("DROP TABLE analystConsensus_old")
 
 
+def _migrate_balance_sheet_schema(conn: sqlite3.Connection) -> None:
+    columns = _table_columns(conn, "balanceSheet")
+    removed_columns = {"netDebt", "totalAssets"}
+    if not removed_columns.intersection(columns):
+        return
+
+    conn.execute("DROP TRIGGER IF EXISTS protect_delete_balanceSheet")
+    conn.execute("ALTER TABLE balanceSheet RENAME TO balanceSheet_old")
+    conn.execute(_BALANCE_SHEET_SCHEMA)
+
+    column_list = ", ".join(_BALANCE_SHEET_COLUMNS)
+    conn.execute(
+        f"""
+        INSERT INTO balanceSheet ({column_list})
+        SELECT {column_list}
+        FROM balanceSheet_old
+        """
+    )
+    conn.execute("DROP TABLE balanceSheet_old")
+
+
+def _migrate_growth_schema(conn: sqlite3.Connection) -> None:
+    columns = _table_columns(conn, "growth")
+    if "revenueQuarterlyGrowth" not in columns:
+        return
+
+    conn.execute("DROP TRIGGER IF EXISTS protect_delete_growth")
+    conn.execute("ALTER TABLE growth RENAME TO growth_old")
+    conn.execute(_GROWTH_SCHEMA)
+
+    column_list = ", ".join(_GROWTH_COLUMNS)
+    conn.execute(
+        f"""
+        INSERT INTO growth ({column_list})
+        SELECT {column_list}
+        FROM growth_old
+        """
+    )
+    conn.execute("DROP TABLE growth_old")
+
+
 def ensure_schema(conn: sqlite3.Connection) -> None:
     """Create the SQLite schema and protection triggers if needed."""
 
     for statement in _SCHEMA_STATEMENTS:
         conn.execute(statement)
     _migrate_analyst_consensus_schema(conn)
+    _migrate_balance_sheet_schema(conn)
+    _migrate_growth_schema(conn)
     for table_name in PROTECTED_TABLES:
         conn.execute(_trigger_sql(table_name))
 
