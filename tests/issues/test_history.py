@@ -222,6 +222,57 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
                     f"diff {diff:.4f} exceeds {tolerance}",
                 )
 
+    def test_issue_1871_repeated_history_calls_return_identical_adj_close(self):
+        """
+        Issue #1871: Repeated identical history(auto_adjust=False) calls on the same
+        Ticker should return bit-for-bit identical Adj Close values.  The original
+        report observed drift between calls (72.4005126953125 vs 72.40050506591797)
+        on 2020-01-02 AAPL daily data.
+        """
+        ticker = yf.Ticker("AAPL", session=self.session)
+        kwargs = dict(
+            start="2020-01-02",
+            end="2020-01-10",
+            interval="1d",
+            auto_adjust=False,
+        )
+
+        baseline = ticker.history(**kwargs)
+        self.assertIsInstance(baseline, pd.DataFrame)
+        self.assertFalse(baseline.empty, "baseline history frame is empty")
+        self.assertIn("Adj Close", baseline.columns)
+
+        # The reported date where drift was first observed
+        reported_date = "2020-01-02"
+        baseline_dates = [ts.strftime("%Y-%m-%d") for ts in baseline.index]
+        self.assertIn(reported_date, baseline_dates, f"{reported_date} missing from baseline")
+
+        for attempt in range(1, 4):
+            with self.subTest(attempt=attempt):
+                frame = ticker.history(**kwargs)
+                self.assertIsInstance(frame, pd.DataFrame)
+                self.assertFalse(frame.empty, f"attempt {attempt} returned empty frame")
+
+                frame_dates = [ts.strftime("%Y-%m-%d") for ts in frame.index]
+                self.assertEqual(
+                    frame_dates,
+                    baseline_dates,
+                    f"attempt {attempt}: date index differs from baseline",
+                )
+
+                for date_str, base_val, retry_val in zip(
+                    baseline_dates,
+                    baseline["Adj Close"].tolist(),
+                    frame["Adj Close"].tolist(),
+                ):
+                    with self.subTest(date=date_str):
+                        self.assertEqual(
+                            base_val,
+                            retry_val,
+                            f"attempt {attempt} Adj Close on {date_str}: "
+                            f"baseline={base_val!r} retry={retry_val!r}",
+                        )
+
     def test_start_end_window_with_empty_non_trading_range_stays_empty(self):
         """
         The reported CRSR non-trading window should return an empty frame
