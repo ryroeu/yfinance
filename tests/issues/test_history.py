@@ -165,6 +165,63 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
             download_series.index = pd.Index([item.date() for item in raw_download_index])
             pd.testing.assert_series_equal(history_series, download_series)
 
+    def test_issue_1876_daily_and_hourly_close_prices_agree_for_tsla(self):
+        """
+        Issue #1876: TSLA 1d and 1h close prices for the same session should agree
+        within a small tolerance. The reported drift was ~$0.28 on 2024-08-06 and
+        ~$0.18 in March 2026 samples. Any residual difference should be under $1.00;
+        if it is larger the interval-close reconciliation is still broken.
+        """
+        start = "2024-08-05"
+        end = "2024-08-07"
+        tolerance = 1.00  # dollars
+
+        daily = yf.Ticker("TSLA", session=self.session).history(
+            start=start,
+            end=end,
+            interval="1d",
+            auto_adjust=True,
+        )
+        hourly = yf.Ticker("TSLA", session=self.session).history(
+            start=start,
+            end=end,
+            interval="1h",
+            auto_adjust=True,
+        )
+
+        self.assertIsInstance(daily, pd.DataFrame)
+        self.assertIsInstance(hourly, pd.DataFrame)
+        self.assertFalse(daily.empty, "daily frame is empty")
+        self.assertFalse(hourly.empty, "hourly frame is empty")
+
+        # Normalise both indexes to plain dates for alignment
+        daily_dates = pd.Index([ts.date() for ts in daily.index])
+        hourly_dates = pd.Index([ts.date() for ts in hourly.index])
+
+        common_dates = daily_dates.intersection(hourly_dates)
+        self.assertGreater(len(common_dates), 0, "no overlapping trading dates")
+
+        for date in common_dates:
+            with self.subTest(date=str(date)):
+                daily_close = daily.loc[
+                    [ts for ts in daily.index if ts.date() == date], "Close"
+                ].iloc[-1]
+
+                # Last hourly bar of the session represents the session close
+                day_hourly = hourly.loc[
+                    [ts for ts in hourly.index if ts.date() == date], "Close"
+                ]
+                hourly_close = day_hourly.iloc[-1]
+
+                diff = abs(float(daily_close) - float(hourly_close))
+                self.assertLess(
+                    diff,
+                    tolerance,
+                    f"TSLA {date}: daily close {daily_close:.4f} vs "
+                    f"hourly last-bar close {hourly_close:.4f} — "
+                    f"diff {diff:.4f} exceeds {tolerance}",
+                )
+
     def test_start_end_window_with_empty_non_trading_range_stays_empty(self):
         """
         The reported CRSR non-trading window should return an empty frame
