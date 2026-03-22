@@ -3,7 +3,6 @@ Change Log
 
 2.0.0
 -----
-
 Breaking Changes:
 - Removed deprecated ``raise_errors`` parameter from ``download()`` and ``Ticker.history()``; use ``yf.config.debug.raise_on_error = True`` instead
 - Renamed internal ``hide_exceptions`` flag to ``raise_on_error`` (inverted polarity: ``False`` = log, ``True`` = raise)
