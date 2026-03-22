@@ -20,8 +20,6 @@ _DB_CLOSE_EXCEPTIONS = (_peewee.PeeweeException, _sqlite3.Error, OSError, ValueE
 # --------------
 # TimeZone cache
 # --------------
-
-
 class _TzCacheException(Exception):
     """Raised when timezone cache initialization fails."""
 
@@ -285,8 +283,6 @@ def get_tz_cache() -> "_TzCache":
 # ------------
 # Cookie cache
 # ------------
-
-
 class _CookieCacheException(Exception):
     """Raised when cookie cache initialization fails."""
 
@@ -556,8 +552,6 @@ def get_cookie_cache() -> "_CookieCache":
 # ----------
 # ISIN cache
 # ----------
-
-
 class _IsinCacheException(Exception):
     """Raised when ISIN cache initialization fails."""
 
@@ -830,8 +824,6 @@ def get_isin_cache() -> "_IsinCache":
 # -----
 # Utils
 # -----
-
-
 def set_cache_location(cache_dir: str):
     """Set the root folder where yfinance cache files are stored."""
     _TzDBManager.set_location(cache_dir)
