@@ -769,9 +769,8 @@ equity_screener_fields = merge_two_level_dicts(
     equity_screener_fields, COMMON_SCREENER_FIELDS
 )
 
-# Preserve backwards-compatible public names without creating invalid Python identifiers.
-globals()["FUND_SCREENER_FIELDS"] = fund_screener_fields
-globals()["EQUITY_SCREENER_FIELDS"] = equity_screener_fields
+FUND_SCREENER_FIELDS = fund_screener_fields
+EQUITY_SCREENER_FIELDS = equity_screener_fields
 
 USER_AGENTS = [
     # Chrome

@@ -7,7 +7,7 @@ import warnings
 
 import curl_cffi
 
-from yfinance.const import _QUERY1_URL_
+from yfinance.constants import _QUERY1_URL_
 from yfinance.data import YfData
 
 from ..utils import dynamic_docstring, generate_list_table_from_dict_universal

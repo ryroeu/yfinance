@@ -5,7 +5,7 @@ from typing import Any, cast
 import pandas as pd
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.const import holders_quote_summary_modules
+from yfinance.constants import holders_quote_summary_modules
 from yfinance.data import YfData
 from yfinance.exceptions import YFDataException
 from yfinance.scrapers.utils import fetch_quote_summary

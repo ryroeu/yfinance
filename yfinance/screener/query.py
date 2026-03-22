@@ -6,7 +6,12 @@ from typing import Collection, Dict, List, Mapping, Sequence, TypeVar, Union
 
 from yfinance.exceptions import YFNotImplementedError
 
-from .. import const
+from ..constants import (
+    EQUITY_SCREENER_EQ_MAP,
+    EQUITY_SCREENER_FIELDS,
+    FUND_SCREENER_EQ_MAP,
+    FUND_SCREENER_FIELDS,
+)
 from ..utils import dynamic_docstring, generate_list_table_from_dict_universal
 
 OperandValue = Union[str, int, float]
@@ -16,12 +21,6 @@ ValidValueGroup = Union[
     Mapping[str, Collection[OperandValue]],
 ]
 T = TypeVar("T", bound=OperandValue)
-EQUITY_SCREENER_FIELDS: Dict[str, set[str]] = getattr(
-    const, "EQUITY_SCREENER_FIELDS"
-)
-FUND_SCREENER_FIELDS: Dict[str, set[str]] = getattr(const, "FUND_SCREENER_FIELDS")
-EQUITY_SCREENER_EQ_MAP = const.EQUITY_SCREENER_EQ_MAP
-FUND_SCREENER_EQ_MAP = const.FUND_SCREENER_EQ_MAP
 
 
 class QueryBase(ABC):

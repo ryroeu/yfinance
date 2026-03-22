@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from curl_cffi import requests
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.const import quote_summary_valid_modules, _QUERY1_URL_, _ROOT_URL_
+from yfinance.constants import quote_summary_valid_modules, _QUERY1_URL_, _ROOT_URL_
 from yfinance.data import YfData
 from yfinance.exceptions import YFDataException, YFException
 from yfinance.scrapers.utils import fetch_quote_summary, get_raw_json_or_none

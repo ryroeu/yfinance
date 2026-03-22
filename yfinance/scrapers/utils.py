@@ -5,7 +5,7 @@ from typing import Any, Optional
 import curl_cffi
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.const import _QUOTE_SUMMARY_URL_, quote_summary_valid_modules
+from yfinance.constants import _QUOTE_SUMMARY_URL_, quote_summary_valid_modules
 from yfinance.data import YfData
 from yfinance.exceptions import YFException
 from .. import utils

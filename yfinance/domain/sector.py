@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 import pandas as _pd
 
 from ..config import YF_CONFIG as YfConfig
-from ..const import SECTOR_INDUSTY_MAPPING_LC
+from ..constants import SECTOR_INDUSTY_MAPPING_LC
 from ..utils import dynamic_docstring, generate_list_table_from_dict, get_yf_logger
 
 from .domain import Domain, _QUERY_URL_

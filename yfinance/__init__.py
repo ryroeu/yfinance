@@ -21,6 +21,7 @@
 
 """Top-level yfinance package exports and compatibility helpers."""
 
+from . import constants
 from .ticker import Ticker
 from .tickers import Tickers
 from .http import download
@@ -44,6 +45,7 @@ from .exceptions import (
 )
 
 __all__ = [
+    "constants",
     "Ticker",
     "Tickers",
     "download",

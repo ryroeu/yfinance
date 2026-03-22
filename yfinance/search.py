@@ -25,7 +25,7 @@ from frozendict import frozendict
 
 from . import utils
 from .http import parse_json_response
-from .const import _BASE_URL_
+from .constants import _BASE_URL_
 from .data import YfData
 
 

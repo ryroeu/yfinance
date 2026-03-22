@@ -8,7 +8,7 @@ from curl_cffi import requests
 
 from . import cache, utils
 from .config import YF_CONFIG as YfConfig
-from .const import _BASE_URL_
+from .constants import _BASE_URL_
 
 _TZ_INFO_FETCH_CTR = {"count": 0}
 

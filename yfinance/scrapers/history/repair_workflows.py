@@ -8,7 +8,7 @@ from typing import Any, cast
 import numpy as np
 import pandas as pd
 
-from yfinance.const import _PRICE_COLNAMES_
+from yfinance.constants import _PRICE_COLNAMES_
 from yfinance.scrapers.history.helpers import _get_scipy_ndimage
 from ... import utils
 

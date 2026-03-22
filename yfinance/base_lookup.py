@@ -14,7 +14,7 @@ import numpy as np
 import pandas as pd
 
 from . import utils
-from .const import _QUERY1_URL_, _ROOT_URL_
+from .constants import _QUERY1_URL_, _ROOT_URL_
 from .exceptions import YFEarningsDateMissing
 from .http import parse_json_response
 

@@ -11,7 +11,7 @@ from curl_cffi import requests
 from . import cache, utils
 from .base_lookup import TickerBaseLookupMixin
 from .config import YF_CONFIG as YfConfig
-from .const import _MIC_TO_YAHOO_SUFFIX
+from .constants import _MIC_TO_YAHOO_SUFFIX
 from .data import YfData
 from .ws.client import WebSocket
 from .scrapers.analysis import Analysis

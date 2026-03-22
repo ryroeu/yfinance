@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as _pd
 
-from ..const import _QUERY1_URL_
+from ..constants import _QUERY1_URL_
 from ..data import YfData
 from ..ticker import Ticker
 

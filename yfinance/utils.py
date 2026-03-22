@@ -60,7 +60,7 @@ from yfinance.utils_price import (
     format_history_metadata_impl as _format_history_metadata_impl,
     safe_merge_dfs_impl as _safe_merge_dfs_impl,
 )
-from . import const
+from .constants import _PRICE_COLNAMES_ as _PRICE_COLNAMES
 
 ProgressBar = _ProgressBar
 dynamic_docstring = _dynamic_docstring
@@ -72,8 +72,6 @@ format_annual_financial_statement = _format_annual_financial_statement
 format_quarterly_financial_statement = _format_quarterly_financial_statement
 retrieve_financial_details = _retrieve_financial_details
 snake_case_to_camel_case = _snake_case_to_camel_case
-
-_PRICE_COLNAMES = getattr(const, "_PRICE_COLNAMES_")
 
 
 # From https://stackoverflow.com/a/59128615

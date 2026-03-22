@@ -10,7 +10,7 @@ from yfinance.options import (
     TICKERS_DOWNLOAD_DEFAULTS,
     bind_options,
 )
-from yfinance.const import holders_quote_summary_modules, quote_summary_valid_modules
+from yfinance.constants import holders_quote_summary_modules, quote_summary_valid_modules
 from yfinance.scrapers.history.helpers import _parse_history_request
 
 

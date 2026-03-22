@@ -10,7 +10,8 @@ import pandas as pd
 from yfinance.config import YF_CONFIG as YfConfig
 from yfinance.data import YfData
 from yfinance.exceptions import YFException, YFNotImplementedError
-from .. import const, utils
+from .. import utils
+from ..constants import fundamentals_keys
 
 
 class Fundamentals:
@@ -119,7 +120,7 @@ class Financials:
             # Yahoo stores the income statement under the "financials" key.
             name = "financials"
 
-        keys = const.fundamentals_keys[name]
+        keys = fundamentals_keys[name]
 
         try:
             return self._get_financials_time_series(timescale, keys)

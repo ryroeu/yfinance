@@ -11,7 +11,7 @@ import dateutil as _dateutil
 import numpy as np
 import pandas as pd
 
-from yfinance.const import _PRICE_COLNAMES_
+from yfinance.constants import _PRICE_COLNAMES_
 from yfinance.scrapers.history.helpers import _interval_to_timedelta
 from ... import utils
 

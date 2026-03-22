@@ -7,7 +7,7 @@ from frozendict import frozendict
 
 from ..http import parse_json_response
 from ..config import YF_CONFIG as YfConfig
-from ..const import _QUERY1_URL_
+from ..constants import _QUERY1_URL_
 from ..data import YfData, utils
 
 _PARSE_ERROR_TYPES = (IndexError, KeyError, TypeError, ValueError)

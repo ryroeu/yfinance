@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from requests import Response, Session, exceptions
 
-from .const import _QUERY1_URL_
+from .constants import _QUERY1_URL_
 from .utils import log_indent_decorator, get_yf_logger, _parse_user_dt
 from .screener import client as screener_client
 from .data import YfData

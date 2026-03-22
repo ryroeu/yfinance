@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.const import _BASE_URL_, _PRICE_COLNAMES_
+from yfinance.constants import _BASE_URL_, _PRICE_COLNAMES_
 from yfinance.exceptions import (
     YFDataException,
     YFInvalidPeriodError,
