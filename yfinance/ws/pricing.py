@@ -42,7 +42,7 @@ PricingData = cast(
         (_message.Message,),
         {
             "DESCRIPTOR": _PRICINGDATA,
-            "__module__": "pricing_pb2",
+            "__module__": "pricing",
             # @@protoc_insertion_point(class_scope:PricingData)
         },
     ),

@@ -67,8 +67,8 @@ class BaseWebSocket:
     def _decode_message(self, base64_message: str) -> dict:
         try:
             decoded_bytes = base64.b64decode(base64_message)
-            pricing_pb2 = importlib.import_module("yfinance.ws.pricing_pb2")
-            pricing_data = cast(Message, pricing_pb2.PricingData())
+            pricing_module = importlib.import_module("yfinance.ws.pricing")
+            pricing_data = cast(Message, pricing_module.PricingData())
             pricing_data.ParseFromString(decoded_bytes)
             return cast(dict, MessageToDict(pricing_data, preserving_proto_field_name=True))
         except (
