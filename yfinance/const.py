@@ -226,25 +226,24 @@ SECTOR_INDUSTY_MAPPING = {
         "Utilities—Renewable",
     },
 }
-SECTOR_INDUSTY_MAPPING_LC = {}
-for sector, industries in SECTOR_INDUSTY_MAPPING.items():
-    normalized_sector = (
-        sector.lower()
+
+
+def _normalize_sector_industry_name(value: str) -> str:
+    return (
+        value.lower()
         .replace("& ", "")
         .replace("- ", "")
         .replace(", ", " ")
         .replace(" ", "-")
     )
-    SECTOR_INDUSTY_MAPPING_LC[normalized_sector] = []
-    for industry in industries:
-        normalized_industry = (
-            industry.lower()
-            .replace("& ", "")
-            .replace("- ", "")
-            .replace(", ", " ")
-            .replace(" ", "-")
-        )
-        SECTOR_INDUSTY_MAPPING_LC[normalized_sector].append(normalized_industry)
+
+
+SECTOR_INDUSTY_MAPPING_LC = {
+    _normalize_sector_industry_name(sector): [
+        _normalize_sector_industry_name(industry) for industry in industries
+    ]
+    for sector, industries in SECTOR_INDUSTY_MAPPING.items()
+}
 
 # _MIC_TO_YAHOO_SUFFIX maps Market Identifier Codes (MIC) to Yahoo Finance market suffixes.
 # c.f. :
