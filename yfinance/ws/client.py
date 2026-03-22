@@ -14,7 +14,7 @@ from websockets.sync.client import connect as sync_connect
 
 from yfinance.config import YF_CONFIG as YfConfig
 from yfinance.pricing_pb2 import PricingData
-from . import utils
+from yfinance import utils
 
 
 class _AsyncWebSocketProtocol(Protocol):

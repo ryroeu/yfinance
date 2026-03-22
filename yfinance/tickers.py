@@ -30,7 +30,7 @@ import pandas as _pd
 from .options import TICKERS_DOWNLOAD_ARG_NAMES, TICKERS_DOWNLOAD_DEFAULTS, bind_options
 from .http.worker import download as _download
 from .ticker import Ticker
-from .live import WebSocket
+from .ws.client import WebSocket
 from .data import YfData
 
 

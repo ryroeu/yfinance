@@ -29,7 +29,7 @@ from .lookup import Lookup
 from .domain.sector import Sector
 from .domain.industry import Industry
 from .domain.market import Market
-from .live import AsyncWebSocket, BaseWebSocket, WebSocket
+from .ws import AsyncWebSocket, BaseWebSocket, WebSocket
 from .config import ConfigMgr, NestedConfig, YF_CONFIG
 from .exceptions import (
     YFDataException,

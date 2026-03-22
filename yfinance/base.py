@@ -13,7 +13,7 @@ from .base_lookup import TickerBaseLookupMixin
 from .config import YF_CONFIG as YfConfig
 from .const import _MIC_TO_YAHOO_SUFFIX
 from .data import YfData
-from .live import WebSocket
+from .ws.client import WebSocket
 from .scrapers.analysis import Analysis
 from .scrapers.fundamentals import Fundamentals
 from .scrapers.funds import FundsData
@@ -100,6 +100,7 @@ class TickerBase(TickerBaseLookupMixin):
         self.ws = None
 
     @utils.log_indent_decorator
+
     def history(self, *args, **kwargs) -> pd.DataFrame:
         """Return price history for the ticker."""
         return self._lazy_load_price_history().history(*args, **kwargs)

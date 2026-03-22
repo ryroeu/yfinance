@@ -4,7 +4,7 @@ from unittest.mock import Mock
 
 import unittest
 
-from yfinance.live import BaseWebSocket
+from yfinance.ws.client import BaseWebSocket
 
 
 class TestWebSocket(unittest.TestCase):
