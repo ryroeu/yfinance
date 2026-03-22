@@ -30,6 +30,7 @@ from typing import Any, cast
 
 import numpy as np
 import pandas as pd
+from pandas import DataFrame, Series
 
 from yfinance import utils
 from yfinance.scrapers.history.fetch import _apply_price_adjustment
@@ -58,8 +59,12 @@ def _make_split_frame():
     )
 
 
-def _numeric_array(series: pd.Series) -> np.ndarray:
-    return np.asarray(series.to_numpy(dtype=float))
+def _numeric_array(values: object) -> np.ndarray:
+    if isinstance(values, (Series, DataFrame)):
+        return np.asarray(values.to_numpy(dtype=float))
+    if isinstance(values, np.ndarray):
+        return np.asarray(values, dtype=float)
+    raise TypeError(f"Unsupported values type: {type(values)!r}")
 
 
 def _make_stub_state(prices: str) -> SimpleNamespace:
