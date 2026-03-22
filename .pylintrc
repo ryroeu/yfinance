@@ -1,6 +1,6 @@
 [MASTER]
-ignore=doc
-ignore-paths=(^|.*[/\\])doc([/\\].*)?$
+ignore=doc,tests
+ignore-paths=(^|.*[/\\])doc([/\\].*)?$|(^|.*[/\\])tests([/\\].*)?$
 
 [DESIGN]
 max-attributes=20
