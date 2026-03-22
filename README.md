@@ -42,8 +42,6 @@ $ cd yfinance
 $ pip install -e .
 ```
 
-### [yfinance relies on the community to investigate bugs and contribute code. Here's how you can help.](https://github.com/ryroeu/yfinance/blob/main/CONTRIBUTING.md)
-
 ---
 
 ![Star History Chart](https://api.star-history.com/svg?repos=ryroeu/yfinance)
