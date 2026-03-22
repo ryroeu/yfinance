@@ -5,10 +5,10 @@ The original report noted that ``yf.Ticker("MSFT").history().keys()`` omits
 
 The behaviour is intentional and unchanged in this fork:
 
-- ``auto_adjust=True`` (the default) adjusts all OHLC columns using the
+- ``prices='auto'`` (the default) adjusts all OHLC columns using the
   ``Adj Close / Close`` ratio and then *renames* ``Adj Close`` to ``Close``.
   The column ``Adj Close`` therefore does not appear in the output.
-- ``auto_adjust=False`` leaves OHLC columns unadjusted and *preserves* the
+- ``prices='raw'`` leaves OHLC columns unadjusted and *preserves* the
   original ``Adj Close`` column alongside the raw ``Close``.
 
 These tests exercise ``utils.auto_adjust`` directly so that no network
@@ -39,7 +39,7 @@ def _make_ohlcv_frame() -> pd.DataFrame:
 
 
 class TestIssue1333AdjCloseAbsentWhenAutoAdjustTrue(unittest.TestCase):
-    """With auto_adjust=True (default), 'Adj Close' must not appear in output."""
+    """With prices='auto' (default), 'Adj Close' must not appear in output."""
 
     def setUp(self):
         self.raw = _make_ohlcv_frame()
@@ -50,7 +50,7 @@ class TestIssue1333AdjCloseAbsentWhenAutoAdjustTrue(unittest.TestCase):
         self.assertNotIn(
             "Adj Close",
             self.adjusted.columns,
-            "'Adj Close' should be absent after auto_adjust; it is renamed to 'Close'.",
+            "'Adj Close' should be absent after prices='auto'; it is renamed to 'Close'.",
         )
 
     def test_close_column_present_and_equals_original_adj_close(self):
@@ -69,22 +69,22 @@ class TestIssue1333AdjCloseAbsentWhenAutoAdjustTrue(unittest.TestCase):
         )
 
     def test_adj_close_consumed_reduces_column_count_by_one(self):
-        """auto_adjust folds 'Adj Close' into 'Close'; the output has one fewer column."""
+        """prices='auto' folds 'Adj Close' into 'Close'; the output has one fewer column."""
         self.assertEqual(len(self.adjusted.columns), len(self.raw.columns) - 1)
 
 
 class TestIssue1333AdjClosePresentWhenAutoAdjustFalse(unittest.TestCase):
-    """With auto_adjust=False, 'Adj Close' must be preserved alongside raw Close."""
+    """With prices='raw', 'Adj Close' must be preserved alongside raw Close."""
 
     def setUp(self):
         self.raw = _make_ohlcv_frame()
 
     def test_adj_close_in_raw_frame(self):
-        """'Adj Close' must be present when auto_adjust has not been applied."""
+        """'Adj Close' must be present when prices='raw'."""
         self.assertIn(
             "Adj Close",
             self.raw.columns,
-            "'Adj Close' must survive when the caller opts out of auto_adjust.",
+            "'Adj Close' must survive when the caller uses prices='raw'.",
         )
 
     def test_close_and_adj_close_differ(self):

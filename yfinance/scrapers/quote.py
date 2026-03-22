@@ -138,7 +138,7 @@ class FastInfo:
             unknown = ", ".join(sorted(kwargs))
             raise TypeError(f"Unexpected keyword arguments: {unknown}")
         if self._prices_1y is None:
-            self._prices_1y = self._tkr.history(period="1y", auto_adjust=False, keepna=True)
+            self._prices_1y = self._tkr.history(period="1y", prices="raw", keepna=True)
             self._md = self._tkr.get_history_metadata()
             try:
                 ctp = self._md["currentTradingPeriod"]
@@ -175,7 +175,7 @@ class FastInfo:
             self._prices_1wk_1h_prepost = self._tkr.history(
                 period="5d",
                 interval="1h",
-                auto_adjust=False,
+                prices="raw",
                 prepost=True,
             )
         return self._prices_1wk_1h_prepost
@@ -186,7 +186,7 @@ class FastInfo:
             self._prices_1wk_1h_reg = self._tkr.history(
                 period="5d",
                 interval="1h",
-                auto_adjust=False,
+                prices="raw",
                 prepost=False,
             )
         return self._prices_1wk_1h_reg

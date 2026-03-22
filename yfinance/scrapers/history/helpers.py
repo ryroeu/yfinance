@@ -4,7 +4,7 @@ import datetime as _datetime
 import importlib
 import logging
 from dataclasses import dataclass
-from typing import Any, Optional, Union, cast
+from typing import Any, Literal, Optional, Union, cast
 
 import dateutil as _dateutil
 from dateutil.relativedelta import relativedelta as _relativedelta
@@ -15,6 +15,9 @@ from ...options import HISTORY_REQUEST_ARG_NAMES, HISTORY_REQUEST_DEFAULTS, bind
 from ... import utils
 
 
+_PRICES_VALUES = ("raw", "auto", "back")
+
+
 @dataclass(frozen=True)
 class _HistoryRequest:
     period: Optional[str] = None
@@ -23,12 +26,18 @@ class _HistoryRequest:
     end: Any = None
     prepost: bool = False
     actions: bool = True
-    auto_adjust: bool = True
-    back_adjust: bool = False
+    prices: Literal["raw", "auto", "back"] = "auto"
     repair: bool = False
     keepna: bool = False
     rounding: bool = False
     timeout: Optional[float] = 10
+
+    def __post_init__(self):
+        if self.prices not in _PRICES_VALUES:
+            raise ValueError(
+                f"prices={self.prices!r} is not valid. "
+                f"Choose one of: {_PRICES_VALUES}"
+            )
 
 
 def _parse_options(function_name, arg_names, defaults, args, kwargs):

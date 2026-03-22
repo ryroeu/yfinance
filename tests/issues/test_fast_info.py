@@ -25,8 +25,8 @@ class TestFastInfoIssues(unittest.TestCase):
 
             def history(self, **kwargs):
                 """Return cached prices after validating the expected call shape."""
-                expected = (kwargs["period"], kwargs["auto_adjust"], kwargs["keepna"])
-                if expected != ("1y", False, True):
+                expected = (kwargs["period"], kwargs["prices"], kwargs["keepna"])
+                if expected != ("1y", "raw", True):
                     raise AssertionError(f"Unexpected history kwargs: {kwargs}")
                 return prices
 

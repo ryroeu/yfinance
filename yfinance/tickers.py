@@ -85,7 +85,7 @@ class Tickers:
             start=options["start"],
             end=options["end"],
             actions=options["actions"],
-            auto_adjust=options["auto_adjust"],
+            prices=options["prices"],
             repair=options["repair"],
             period=options["period"],
             interval=options["interval"],

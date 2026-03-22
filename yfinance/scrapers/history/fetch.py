@@ -43,8 +43,7 @@ def _build_fetch_state(price_history, request: _HistoryRequest) -> _FetchState:
         end=request.end,
         prepost=request.prepost,
         actions=request.actions,
-        auto_adjust=request.auto_adjust,
-        back_adjust=request.back_adjust,
+        prices=request.prices,
         repair=request.repair,
         keepna=request.keepna,
         rounding=request.rounding,
@@ -667,22 +666,19 @@ def _repair_prices_if_needed(state: _FetchState, df: pd.DataFrame) -> pd.DataFra
 
 
 def _apply_price_adjustment(state: _FetchState, df: pd.DataFrame) -> pd.DataFrame:
+    if state.prices == "raw":
+        return df
     try:
-        if state.auto_adjust:
+        if state.prices == "auto":
             return cast(pd.DataFrame, utils.auto_adjust(df))
-        if state.back_adjust:
+        if state.prices == "back":
             return cast(pd.DataFrame, utils.back_adjust(df))
     except (AttributeError, KeyError, TypeError, ValueError) as error:
         if YfConfig.debug.raise_on_error:
             raise
-        err_msg = (
-            f"auto_adjust failed with {error}"
-            if state.auto_adjust
-            else f"back_adjust failed with {error}"
-        )
         shared.set_df(state.price_history.ticker, utils.empty_df())
-        shared.set_error(state.price_history.ticker, err_msg)
-        state.logger.error("%s: %s", state.price_history.ticker, err_msg)
+        shared.set_error(state.price_history.ticker, repr(error))
+        state.logger.error("%s: prices=%r adjustment failed: %s", state.price_history.ticker, state.prices, error)
     return df
 
 

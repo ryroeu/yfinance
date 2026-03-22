@@ -107,7 +107,7 @@ class TestPriceHistory(unittest.TestCase):
     def test_download_multi_small_interval(self):
         """Validate multi-ticker intraday download timezone normalization."""
         use_tkrs = ["AAPL", "0Q3.DE", "ATVI"]
-        df = yf.download(use_tkrs, period="1d", interval="5m", auto_adjust=True)
+        df = yf.download(use_tkrs, period="1d", interval="5m", prices="auto")
         assert df is not None
         self.assertEqual(_as_datetime_index(df.index).tz, _dt.timezone.utc)
 
@@ -117,8 +117,8 @@ class TestPriceHistory(unittest.TestCase):
         valid_tkrs = ["AAPL", "INTC"]
 
         start_d = _dt.date.today() - _dt.timedelta(days=30)
-        data_invalid_sym = yf.download(invalid_tkrs, start=start_d, auto_adjust=True)
-        data_valid_sym = yf.download(valid_tkrs, start=start_d, auto_adjust=True)
+        data_invalid_sym = yf.download(invalid_tkrs, start=start_d, prices="auto")
+        data_valid_sym = yf.download(valid_tkrs, start=start_d, prices="auto")
         assert data_invalid_sym is not None
         assert data_valid_sym is not None
 

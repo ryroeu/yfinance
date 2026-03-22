@@ -142,7 +142,7 @@ class TestPriceRepair(PriceRepairTestCase):
 
     def _assert_stock_split_unchanged(self, ticker_symbol: str, interval: str, **history_args):
         ticker, timezone, history = self.get_history_parts(ticker_symbol)
-        frame = ticker.history(interval=interval, auto_adjust=False, **history_args).sort_index()
+        frame = ticker.history(interval=interval, prices="raw", **history_args).sort_index()
         repaired = to_dataframe(
             call_private(history, "_fix_bad_stock_splits", frame, interval, timezone)
         )
@@ -385,7 +385,7 @@ class TestPriceRepair(PriceRepairTestCase):
     def test_repair_zeroes_daily(self):
         """Repair a daily row of missing OHLCV values."""
         ticker, timezone, history = self.get_history_parts("SHEL.L")
-        correct = ticker.history(period='1mo', auto_adjust=False)
+        correct = ticker.history(period='1mo', prices="raw")
         bad_timestamp = correct.index[len(correct) // 2]
         broken = cast(_pd.DataFrame, correct.copy())
         for column in broken.columns:
@@ -443,7 +443,7 @@ class TestPriceRepair(PriceRepairTestCase):
         """Repair a missing hourly OHLCV bar."""
         _, timezone, history = self.get_history_parts("INTC")
         correct = to_dataframe(
-            history.history(period="5d", interval="1h", auto_adjust=False, repair=True)
+            history.history(period="5d", interval="1h", prices="raw", repair=True)
         )
         broken = cast(_pd.DataFrame, correct.copy())
         bad_index = correct.index[10]

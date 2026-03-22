@@ -47,13 +47,13 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
             start="2014-12-29",
             end="2020-11-29",
             interval="1wk",
-            auto_adjust=False,
+            prices="raw",
         )
         df2 = yf.Ticker("QQQ", session=self.session).history(
             start="2014-12-29",
             end="2020-11-29",
             interval="1wk",
-            auto_adjust=False,
+            prices="raw",
         )
 
         self.assertFalse(df1.empty)
@@ -138,14 +138,14 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
         raw_history = yf.Ticker("AAPL", session=self.session).history(
             start=start,
             end=end,
-            auto_adjust=False,
+            prices="raw",
             actions=False,
         )
         raw_download = yf.download(
             "AAPL",
             start=start,
             end=end,
-            auto_adjust=False,
+            prices="raw",
             actions=False,
             progress=False,
             threads=False,
@@ -180,13 +180,13 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
             start=start,
             end=end,
             interval="1d",
-            auto_adjust=True,
+            prices="auto",
         )
         hourly = yf.Ticker("TSLA", session=self.session).history(
             start=start,
             end=end,
             interval="1h",
-            auto_adjust=True,
+            prices="auto",
         )
 
         self.assertIsInstance(daily, pd.DataFrame)
@@ -224,7 +224,7 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
 
     def test_issue_1871_repeated_history_calls_return_identical_adj_close(self):
         """
-        Issue #1871: Repeated identical history(auto_adjust=False) calls on the same
+        Issue #1871: Repeated identical history(prices="raw") calls on the same
         Ticker should return bit-for-bit identical Adj Close values.  The original
         report observed drift between calls (72.4005126953125 vs 72.40050506591797)
         on 2020-01-02 AAPL daily data.
@@ -234,7 +234,7 @@ class TestSessionTickerHistoryIssueScenarios(SessionTickerTestCase):
             "start": "2020-01-02",
             "end": "2020-01-10",
             "interval": "1d",
-            "auto_adjust": False,
+            "prices": "raw",
         }
 
         baseline = ticker.history(**kwargs)

@@ -35,8 +35,7 @@ _DOWNLOAD_ARG_NAMES = (
     "threads",
     "ignore_tz",
     "group_by",
-    "auto_adjust",
-    "back_adjust",
+    "prices",
     "repair",
     "keepna",
     "progress",
@@ -55,8 +54,7 @@ _DOWNLOAD_DEFAULTS = {
     "threads": True,
     "ignore_tz": None,
     "group_by": "column",
-    "auto_adjust": True,
-    "back_adjust": False,
+    "prices": "auto",
     "repair": False,
     "keepna": False,
     "progress": True,
@@ -72,8 +70,7 @@ _DOWNLOAD_DEFAULTS = {
 _DOWNLOAD_ONE_THREADED_ARG_NAMES = (
     "start",
     "end",
-    "auto_adjust",
-    "back_adjust",
+    "prices",
     "repair",
     "actions",
     "progress",
@@ -87,8 +84,7 @@ _DOWNLOAD_ONE_THREADED_ARG_NAMES = (
 _DOWNLOAD_ONE_THREADED_DEFAULTS = {
     "start": None,
     "end": None,
-    "auto_adjust": False,
-    "back_adjust": False,
+    "prices": "auto",
     "repair": False,
     "actions": False,
     "progress": True,
@@ -103,8 +99,7 @@ _DOWNLOAD_ONE_THREADED_DEFAULTS = {
 _DOWNLOAD_ONE_ARG_NAMES = (
     "start",
     "end",
-    "auto_adjust",
-    "back_adjust",
+    "prices",
     "repair",
     "actions",
     "period",
@@ -117,8 +112,7 @@ _DOWNLOAD_ONE_ARG_NAMES = (
 _DOWNLOAD_ONE_DEFAULTS = {
     "start": None,
     "end": None,
-    "auto_adjust": False,
-    "back_adjust": False,
+    "prices": "auto",
     "repair": False,
     "actions": False,
     "period": None,
@@ -219,8 +213,7 @@ def _download_all_tickers_threaded(manager: DownloadManager, options: dict) -> N
             end=options["end"],
             prepost=options["prepost"],
             actions=options["actions"],
-            auto_adjust=options["auto_adjust"],
-            back_adjust=options["back_adjust"],
+            prices=options["prices"],
             repair=options["repair"],
             keepna=options["keepna"],
             progress=(options["progress"] and index > 0),
@@ -332,8 +325,7 @@ def _download_one_threaded(ticker: str, manager: DownloadManager, *args, **kwarg
         manager,
         start=options["start"],
         end=options["end"],
-        auto_adjust=options["auto_adjust"],
-        back_adjust=options["back_adjust"],
+        prices=options["prices"],
         repair=options["repair"],
         actions=options["actions"],
         period=options["period"],
@@ -368,8 +360,7 @@ def _download_one(ticker: str, manager: DownloadManager, *args, **kwargs) -> Non
             end=options["end"],
             prepost=options["prepost"],
             actions=options["actions"],
-            auto_adjust=options["auto_adjust"],
-            back_adjust=options["back_adjust"],
+            prices=options["prices"],
             repair=options["repair"],
             rounding=options["rounding"],
             keepna=options["keepna"],
@@ -412,8 +403,8 @@ def download(tickers, *args, **kwargs) -> Union[_pd.DataFrame, None]:
         prepost : bool
             Include Pre and Post market data in results?
             Default is False
-        auto_adjust: bool
-            Adjust all OHLC automatically? Default is True
+        prices: str
+            Price adjustment mode: 'auto' (default), 'back', or 'raw'
         repair: bool
             Detect currency unit 100x mixups and attempt repair
             Default is False

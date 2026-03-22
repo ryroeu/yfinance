@@ -295,7 +295,7 @@ def _fetch_fine_history(context: _ReconstructContext, fetch_start, fetch_end) ->
             start=fetch_start,
             end=fetch_end,
             interval=context.sub_interval,
-            auto_adjust=False,
+            prices="raw",
             actions=True,
             prepost=context.prepost,
             repair=True,

@@ -215,7 +215,7 @@ class TestIssue2333(unittest.TestCase):
 
 
 class TestIssue2350(unittest.TestCase):
-    """Verify ``history(auto_adjust=True)`` succeeds on a normal chart payload."""
+    """Verify ``history(prices="auto")`` succeeds on a normal chart payload."""
 
     def test_ticker_history_auto_adjust_returns_frame(self):
         """The simplified GOOGL repro should not raise ``TypeError``."""
@@ -259,7 +259,7 @@ class TestIssue2350(unittest.TestCase):
             patch.object(client, "get", return_value=chart_response),
             patch.object(client, "cache_get", return_value=chart_response),
         ):
-            data = ticker.history(auto_adjust=True).astype(float).round(3)
+            data = ticker.history(prices="auto").astype(float).round(3)
 
         self.assertIsInstance(data, pd.DataFrame)
         self.assertFalse(data.empty)
@@ -336,7 +336,7 @@ class TestIssue2360(unittest.TestCase):
             frame = yf.download(
                 ["CBA.AX", "FBU.AX"],
                 period="1d",
-                auto_adjust=False,
+                prices="raw",
                 group_by="ticker",
                 progress=False,
                 threads=False,
@@ -456,11 +456,11 @@ class TestIssue930(unittest.TestCase):
             patch.object(YfData, "cache_get", autospec=True, side_effect=fake_get),
         ):
             ticker = yf.Ticker("AAPL")
-            history = ticker.history(period="max", auto_adjust=False, actions=True)
+            history = ticker.history(period="max", prices="raw", actions=True)
             download = yf.download(
                 "AAPL",
                 period="max",
-                auto_adjust=False,
+                prices="raw",
                 actions=True,
                 progress=False,
                 threads=False,

@@ -74,7 +74,7 @@ class TestIssue2557(unittest.TestCase):
                 end="2023-01-10",
                 progress=False,
                 threads=False,
-                auto_adjust=False,
+                prices="raw",
                 multi_level_index=False,
             )
 
@@ -309,7 +309,7 @@ class TestIssue2353(unittest.TestCase):
             patch.object(client, "get", return_value=response),
             patch.object(client, "cache_get", return_value=response),
         ):
-            data = history.history(period="max", interval="1d", auto_adjust=True)
+            data = history.history(period="max", interval="1d", prices="auto")
 
         data = require_dataframe(data, "Ticker.history() returned None")
         self.assertEqual(len(data), 2, "partial bar must be dropped when keepna=False")
@@ -344,7 +344,7 @@ class TestIssue2353(unittest.TestCase):
                 ["SPY", "QQQ"],
                 period="max",
                 group_by="ticker",
-                auto_adjust=True,
+                prices="auto",
                 threads=False,
                 progress=False,
             )
@@ -421,7 +421,7 @@ class TestIssue2327(unittest.TestCase):
                 start="2025-02-08",
                 end="2025-02-22",
                 interval="1h",
-                auto_adjust=False,
+                prices="raw",
             )
 
         data = require_dataframe(data, "Ticker.history() returned None")
@@ -452,7 +452,7 @@ class TestIssue2327(unittest.TestCase):
                 start="2025-02-08",
                 end="2025-02-22",
                 interval="1h",
-                auto_adjust=False,
+                prices="raw",
                 progress=False,
                 threads=False,
                 multi_level_index=False,
@@ -480,7 +480,7 @@ class TestIssue2327(unittest.TestCase):
                 start="2025-02-08",
                 end="2025-02-22",
                 interval="1h",
-                auto_adjust=False,
+                prices="raw",
             )
 
         def fake_get_tz(data_client, symbol, timeout):
@@ -500,7 +500,7 @@ class TestIssue2327(unittest.TestCase):
                 start="2025-02-08",
                 end="2025-02-22",
                 interval="1h",
-                auto_adjust=False,
+                prices="raw",
                 progress=False,
                 threads=False,
                 multi_level_index=False,
@@ -611,7 +611,7 @@ class TestIssue1863(unittest.TestCase):
             patch.object(client, "cache_get", return_value=response),
         ):
             with self.assertRaises(YFPricesMissingError):
-                history_obj.history(period="1mo", interval="1d", auto_adjust=False)
+                history_obj.history(period="1mo", interval="1d", prices="raw")
 
     def test_history_logs_error_without_raw_stderr_when_raise_on_error_disabled(self):
         """Ticker.history() must log the failure via the logging framework, not raw print."""
@@ -634,7 +634,7 @@ class TestIssue1863(unittest.TestCase):
             patch("sys.stderr", captured_stderr),
             self.assertLogs("yfinance", level="ERROR") as log_capture,
         ):
-            result = history_obj.history(period="1mo", interval="1d", auto_adjust=False)
+            result = history_obj.history(period="1mo", interval="1d", prices="raw")
 
         raw_stderr_output = captured_stderr.getvalue()
         self.assertFalse(

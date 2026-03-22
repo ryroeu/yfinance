@@ -64,11 +64,11 @@ class PriceHistory:
             prepost : bool
               | Include Pre and Post market data in results?
               | Default: False
-            auto_adjust : bool
-              | Adjust all OHLC automatically?
-              | Default: True
-            back_adjust : bool
-              | Back-adjusted data to mimic true historical prices
+            prices : str
+              | Price adjustment mode: 'auto' (default), 'back', or 'raw'
+              | 'auto'  — replace OHLC with split+dividend-adjusted values (Adj Close scale)
+              | 'back'  — adjust Open/High/Low by the same ratio; keep raw Close
+              | 'raw'   — return unadjusted OHLC exactly as Yahoo delivers them
             repair : bool
               | Fixes price errors in Yahoo data: 100x, missing, bad dividend adjust.
               | Default: False
@@ -91,7 +91,7 @@ class PriceHistory:
         if cache_key in self._history_cache:
             return self._history_cache[cache_key]
 
-        df = self.history(period=period, interval=interval, prepost=True)
+        df = self.history(period=period, interval=interval, prepost=True, prices="raw")
         self._history_cache[cache_key] = df
         return df
 
