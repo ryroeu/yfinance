@@ -32,6 +32,8 @@
 - `Lookup`: ticker symbol lookup
 - `Sector` and `Industry`: sector and industry information
 
+---
+
 ## Installation
 
 Clone the repository and install in editable mode:
@@ -44,7 +46,23 @@ $ pip install -e .
 
 ---
 
-![Star History Chart](https://api.star-history.com/svg?repos=ryroeu/yfinance)
+## App
+
+Run in terminal
+
+``` {.sourceCode .bash}
+python app/main.py
+```
+
+Run in browser
+
+``` {.sourceCode .bash}
+# Start it with:
+uvicorn app.web.app:app --reload
+
+# Then open: 
+http://localhost:8000. 
+```
 
 ---
 
