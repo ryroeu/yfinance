@@ -678,7 +678,12 @@ def _apply_price_adjustment(state: _FetchState, df: pd.DataFrame) -> pd.DataFram
             raise
         shared.set_df(state.price_history.ticker, utils.empty_df())
         shared.set_error(state.price_history.ticker, repr(error))
-        state.logger.error("%s: prices=%r adjustment failed: %s", state.price_history.ticker, state.prices, error)
+        state.logger.error(
+            "%s: prices=%r adjustment failed: %s",
+            state.price_history.ticker,
+            state.prices,
+            error,
+        )
     return df
 
 

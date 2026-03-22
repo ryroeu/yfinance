@@ -26,6 +26,7 @@ What each mode does:
 
 import unittest
 from types import SimpleNamespace
+from typing import Any, cast
 
 import numpy as np
 import pandas as pd
@@ -203,8 +204,12 @@ class TestPricesParameter(unittest.TestCase):
     def test_auto_and_back_produce_different_close(self):
         """prices='auto' and prices='back' must yield different Close columns."""
         raw = _make_split_frame()
-        result_auto = _apply_price_adjustment(_make_stub_state("auto"), raw.copy())  # type: ignore[arg-type]
-        result_back = _apply_price_adjustment(_make_stub_state("back"), raw.copy())  # type: ignore[arg-type]
+        result_auto = _apply_price_adjustment(
+            _make_stub_state("auto"), raw.copy()
+        )  # type: ignore[arg-type]
+        result_back = _apply_price_adjustment(
+            _make_stub_state("back"), raw.copy()
+        )  # type: ignore[arg-type]
 
         self.assertFalse(
             np.allclose(
@@ -217,7 +222,7 @@ class TestPricesParameter(unittest.TestCase):
     def test_prices_invalid_value_raises(self):
         """_HistoryRequest must reject unknown prices= values."""
         with self.assertRaises(ValueError):
-            _HistoryRequest(prices="invalid")
+            _HistoryRequest(prices=cast(Any, "invalid"))
 
     def test_history_request_default_is_auto(self):
         """_HistoryRequest() default must be prices='auto'."""
