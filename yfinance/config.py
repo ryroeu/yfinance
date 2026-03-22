@@ -63,6 +63,11 @@ class ConfigMgr:
 YF_CONFIG = ConfigMgr()
 
 
+def should_raise_on_error() -> bool:
+    """Return whether strict error propagation is enabled."""
+    return bool(YF_CONFIG.debug.raise_on_error)
+
+
 def __getattr__(name):
     if name == "YfConfig":
         return YF_CONFIG

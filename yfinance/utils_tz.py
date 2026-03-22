@@ -7,10 +7,16 @@ from typing import Any, Callable, Optional
 from curl_cffi import requests
 
 from . import cache, utils
-from .config import YF_CONFIG as YfConfig
+from .config import should_raise_on_error
 from .constants import _BASE_URL_
 
 _TZ_INFO_FETCH_CTR = {"count": 0}
+_TZ_FETCH_ERRORS = (
+    requests.exceptions.RequestException,
+    AttributeError,
+    TypeError,
+    ValueError,
+)
 
 
 def fetch_ticker_tz(data_client, ticker: str, timeout) -> Optional[str]:
@@ -22,13 +28,8 @@ def fetch_ticker_tz(data_client, ticker: str, timeout) -> Optional[str]:
     try:
         response = data_client.cache_get(url=url, params=params, timeout=timeout)
         data = response.json()
-    except (
-        requests.exceptions.RequestException,
-        AttributeError,
-        TypeError,
-        ValueError,
-    ) as error:
-        if YfConfig.debug.raise_on_error:
+    except _TZ_FETCH_ERRORS as error:
+        if should_raise_on_error():
             raise
         logger.error("Failed to get ticker '%s' reason: %s", ticker, error)
         return None
@@ -41,7 +42,7 @@ def fetch_ticker_tz(data_client, ticker: str, timeout) -> Optional[str]:
     try:
         return data["chart"]["result"][0]["meta"]["exchangeTimezoneName"]
     except (IndexError, KeyError, TypeError) as error:
-        if YfConfig.debug.raise_on_error:
+        if should_raise_on_error():
             raise
         logger.error(
             "Could not get exchangeTimezoneName for ticker '%s' reason: %s",

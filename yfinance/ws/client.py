@@ -14,7 +14,18 @@ from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect as sync_connect
 
 from yfinance.config import YF_CONFIG as YfConfig
+from yfinance.config import should_raise_on_error
 from yfinance import utils
+
+
+_DECODE_ERRORS = (
+    binascii.Error,
+    DecodeError,
+    ImportError,
+    AttributeError,
+    TypeError,
+    ValueError,
+)
 
 
 class _AsyncWebSocketProtocol(Protocol):
@@ -71,15 +82,8 @@ class BaseWebSocket:
             pricing_data = cast(Message, pricing_module.PricingData())
             pricing_data.ParseFromString(decoded_bytes)
             return cast(dict, MessageToDict(pricing_data, preserving_proto_field_name=True))
-        except (
-            binascii.Error,
-            DecodeError,
-            ImportError,
-            AttributeError,
-            TypeError,
-            ValueError,
-        ) as error:
-            if YfConfig.debug.raise_on_error:
+        except _DECODE_ERRORS as error:
+            if should_raise_on_error():
                 raise
             self.logger.error("Failed to decode message: %s", error, exc_info=True)
             if self.verbose:
