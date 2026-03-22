@@ -3,6 +3,7 @@
 import asyncio
 import binascii
 import base64
+import importlib
 import json
 from typing import Any, AsyncIterator, Callable, List, Optional, Protocol, Union, cast
 
@@ -13,7 +14,6 @@ from websockets.exceptions import WebSocketException
 from websockets.sync.client import connect as sync_connect
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.pricing_pb2 import PricingData
 from yfinance import utils
 
 
@@ -67,10 +67,18 @@ class BaseWebSocket:
     def _decode_message(self, base64_message: str) -> dict:
         try:
             decoded_bytes = base64.b64decode(base64_message)
-            pricing_data = cast(Message, PricingData())
+            pricing_pb2 = importlib.import_module("yfinance.ws.pricing_pb2")
+            pricing_data = cast(Message, pricing_pb2.PricingData())
             pricing_data.ParseFromString(decoded_bytes)
             return cast(dict, MessageToDict(pricing_data, preserving_proto_field_name=True))
-        except (binascii.Error, DecodeError, TypeError, ValueError) as error:
+        except (
+            binascii.Error,
+            DecodeError,
+            ImportError,
+            AttributeError,
+            TypeError,
+            ValueError,
+        ) as error:
             if YfConfig.debug.raise_on_error:
                 raise
             self.logger.error("Failed to decode message: %s", error, exc_info=True)

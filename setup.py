@@ -75,7 +75,7 @@ setup(
     },
     # Include protobuf files for websocket support
     package_data={
-        'yfinance': ['pricing.proto', 'pricing_pb2.py'],
+        'yfinance.ws': ['pricing.proto', 'pricing_pb2.py'],
     },
     include_package_data=True,
     # Note: Pandas.read_html() needs lxml (included above)
