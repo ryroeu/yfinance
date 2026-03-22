@@ -74,7 +74,9 @@ def format_annual_financial_statement(
 
     statement.index = camel2title(statement.T.index.tolist())
     statement["level_detail"] = level_detail
-    statement = statement.set_index([statement.index, "level_detail"])
+    statement["_item"] = statement.index
+    statement = statement.set_index(["_item", "level_detail"])
+    statement.index = statement.index.set_names([None, "level_detail"])
     statement = statement[sorted(statement.columns, reverse=True)]
     statement = statement.dropna(how="all")
     return statement
@@ -85,7 +87,9 @@ def format_quarterly_financial_statement(statement, level_detail, order):
     statement = statement.reindex(order)
     statement.index = camel2title(statement.T.columns.tolist())
     statement["level_detail"] = level_detail
-    statement = statement.set_index([statement.index, "level_detail"])
+    statement["_item"] = statement.index
+    statement = statement.set_index(["_item", "level_detail"])
+    statement.index = statement.index.set_names([None, "level_detail"])
     statement = statement[sorted(statement.columns, reverse=True)]
     statement = statement.dropna(how="all")
     statement.columns = _pd.to_datetime(statement.columns).date
