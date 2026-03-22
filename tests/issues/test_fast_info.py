@@ -49,6 +49,53 @@ class TestFastInfoIssues(unittest.TestCase):
         self.assertIsNone(getattr(fast_info, "_cache")["today_midnight"])
         self.assertEqual(previous_close, 220.0)
 
+    def test_open_returns_current_day_not_previous_day(self):
+        """fast_info.open should return today's open, not yesterday's (issue #1591).
+
+        The reporter received the previous day's open price instead of the current
+        day's when calling fast_info.open during an active trading session.  The
+        refactored open property uses _get_1y_prices(full_days_only=False), which
+        always includes the current day's row, so iloc[-1] is today's Open.
+        """
+        today = pd.Timestamp.now("UTC").normalize()
+        yesterday = today - pd.Timedelta(days=1)
+
+        prices = pd.DataFrame(
+            {
+                "Open":   [100.0, 105.0],
+                "High":   [110.0, 115.0],
+                "Low":    [95.0,  100.0],
+                "Close":  [108.0, 112.0],
+                "Volume": [1000,  1200],
+            },
+            index=pd.DatetimeIndex([yesterday, today]),
+        )
+
+        class FakeTicker:
+            """Minimal ticker stub with both yesterday and today in price history."""
+
+            def history(self, **kwargs):
+                """Return two-row price history covering yesterday and today."""
+                expected = (kwargs["period"], kwargs["prices"], kwargs["keepna"])
+                if expected != ("1y", "raw", True):
+                    raise AssertionError(f"Unexpected history kwargs: {kwargs}")
+                return prices
+
+            def get_history_metadata(self):
+                """Return minimal metadata; no currentTradingPeriod needed."""
+                return {"exchangeTimezoneName": "UTC"}
+
+            def get_info(self):
+                """Return empty info payload."""
+                return {}
+
+        fast_info = FastInfo(FakeTicker())
+
+        # Core assertion: today's open (105.0), not yesterday's (100.0)
+        self.assertEqual(fast_info.open, 105.0)
+        # Sanity-check that previous_close still resolves to yesterday's close
+        self.assertEqual(fast_info.regular_market_previous_close, 108.0)
+
 
 class TestSessionTickerIssueExtras(SessionTickerTestCase):
     """Remaining session-backed regression tests collected from reported issues."""
