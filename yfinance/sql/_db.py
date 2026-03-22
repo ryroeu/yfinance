@@ -24,6 +24,7 @@ _BALANCE_SHEET_COLUMNS = (
     "currentRatio",
     "quickRatio",
     "bookValue",
+    "companybookValue",
 )
 
 _GROWTH_COLUMNS = (
@@ -79,6 +80,7 @@ _BALANCE_SHEET_SCHEMA = """
         currentRatio REAL,
         quickRatio REAL,
         bookValue REAL,
+        companybookValue REAL,
         FOREIGN KEY (symbol) REFERENCES fastInfo(symbol)
     )
 """
@@ -248,21 +250,31 @@ def _migrate_analyst_consensus_schema(conn: sqlite3.Connection) -> None:
 def _migrate_balance_sheet_schema(conn: sqlite3.Connection) -> None:
     columns = _table_columns(conn, "balanceSheet")
     removed_columns = {"netDebt", "totalAssets"}
+    missing_columns = tuple(
+        column for column in _BALANCE_SHEET_COLUMNS if column not in columns
+    )
+    if not removed_columns.intersection(columns) and not missing_columns:
+        return
+
     if not removed_columns.intersection(columns):
+        if "companybookValue" in missing_columns:
+            conn.execute("ALTER TABLE balanceSheet ADD COLUMN companybookValue REAL")
         return
 
     conn.execute("DROP TRIGGER IF EXISTS protect_delete_balanceSheet")
     conn.execute("ALTER TABLE balanceSheet RENAME TO balanceSheet_old")
     conn.execute(_BALANCE_SHEET_SCHEMA)
 
-    column_list = ", ".join(_BALANCE_SHEET_COLUMNS)
-    conn.execute(
-        f"""
-        INSERT INTO balanceSheet ({column_list})
-        SELECT {column_list}
-        FROM balanceSheet_old
-        """
-    )
+    shared_columns = tuple(column for column in _BALANCE_SHEET_COLUMNS if column in columns)
+    if shared_columns:
+        column_list = ", ".join(shared_columns)
+        conn.execute(
+            f"""
+            INSERT INTO balanceSheet ({column_list})
+            SELECT {column_list}
+            FROM balanceSheet_old
+            """
+        )
     conn.execute("DROP TABLE balanceSheet_old")
 
 
