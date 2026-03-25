@@ -11,7 +11,7 @@ from curl_cffi import requests
 from frozendict import frozendict
 
 from . import utils
-from .auth import YahooAuthMixin
+from .auth.manager import YahooAuthMixin
 from .config import YF_CONFIG as YfConfig
 from .exceptions import YFException, YFRateLimitError
 
@@ -95,7 +95,7 @@ class YfData(YahooAuthMixin, metaclass=SingletonMeta):
         """Return the endpoint client for subscription-capable Yahoo fetches."""
         client = getattr(self, "_subscription_client", None)
         if client is None:
-            from .subscription import SubscriptionClient
+            from .subscription.client import SubscriptionClient
 
             client = SubscriptionClient(self)
             self._subscription_client = client

@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import Mock
 
-from yfinance.subscription import SubscriptionClient
+from yfinance.subscription.client import SubscriptionClient
 
 
 class TestSubscriptionClient(unittest.TestCase):
