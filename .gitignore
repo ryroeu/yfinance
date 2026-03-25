@@ -8,6 +8,7 @@ yfinance.egg-info
 .vscode/
 .claude/
 build/
+/ryroeu/
 *.html
 *.css
 test.ipynb
