@@ -47,6 +47,7 @@ class Tickers:
         tickers = tickers if isinstance(
             tickers, list) else tickers.replace(',', ' ').split()
         self.symbols = [ticker.upper() for ticker in tickers]
+        self.session = session
         self.tickers: Dict[str, Ticker] = {
             ticker: Ticker(ticker, session=session) for ticker in self.symbols
         }
@@ -79,6 +80,7 @@ class Tickers:
         """Download price history for all symbols in this container."""
 
         options, passthrough = self._parse_download_options(args, kwargs)
+        session = passthrough.pop("session", self.session)
 
         data = _download(
             self.symbols,
@@ -94,6 +96,7 @@ class Tickers:
             threads=options["threads"],
             progress=options["progress"],
             timeout=options["timeout"],
+            session=session,
             **passthrough,
         )
         if data is None:
@@ -113,7 +116,11 @@ class Tickers:
     def news(self):
         """Get the latest news entries for each symbol."""
 
-        return {ticker: list(Ticker(ticker).news) for ticker in self.symbols}
+        return {
+            ticker: list(self.tickers[ticker].news)
+            for ticker in self.symbols
+            if ticker in self.tickers
+        }
 
     def live(self, message_handler=None, verbose=True):
         """Start a websocket stream subscribed to all symbols."""

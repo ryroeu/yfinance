@@ -19,6 +19,7 @@ class Domain(ABC):
         """Initialize a domain entity with key and optional HTTP session."""
         self._key: str = key
         self._region: str = region
+        self._session = session
         self._data: YfData = YfData(session=session)
 
         self._name: Optional[str] = None
@@ -51,7 +52,7 @@ class Domain(ABC):
     @property
     def ticker(self) -> Ticker:
         """Return the domain symbol as a :class:`Ticker` object."""
-        return Ticker(self.symbol)
+        return Ticker(self.symbol, session=self._session)
 
     @property
     def overview(self) -> Dict[str, Any]:
