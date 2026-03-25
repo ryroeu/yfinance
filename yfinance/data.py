@@ -14,6 +14,7 @@ from . import utils
 from .auth.manager import YahooAuthMixin
 from .config import YF_CONFIG as YfConfig
 from .exceptions import YFException, YFRateLimitError
+from .subscription.client import SubscriptionClient
 
 
 def _is_transient_error(exception):
@@ -95,8 +96,6 @@ class YfData(YahooAuthMixin, metaclass=SingletonMeta):
         """Return the endpoint client for subscription-capable Yahoo fetches."""
         client = getattr(self, "_subscription_client", None)
         if client is None:
-            from .subscription.client import SubscriptionClient
-
             client = SubscriptionClient(self)
             self._subscription_client = client
         return client

@@ -28,7 +28,7 @@ from .strategies import (
 )
 
 
-class YahooAuthMixin:
+class YahooAuthMixin:  # pylint: disable=too-few-public-methods
     """Provide Yahoo authentication state and cookie/crumb lifecycle methods."""
 
     def _init_auth(self, session=None) -> None:

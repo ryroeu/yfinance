@@ -16,7 +16,7 @@ def create_default_session() -> requests.session.Session:
 def validate_session(session: requests.session.Session) -> bool:
     """Validate the caller-provided session and return caching state."""
     try:
-        session.cache
+        getattr(session, "cache")
     except AttributeError:
         session_is_caching = False
     else:
