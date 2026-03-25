@@ -27,8 +27,18 @@ Access cache helpers directly::
 import sqlite3
 from typing import Any, Mapping, Sequence
 
-from yfinance.sql import cache, tables
+from yfinance.sql import cache
 from yfinance.sql._db import delete_symbols as delete_symbols_from_db
+from yfinance.sql.tables import (
+    analyst_consensus,
+    balance_sheet,
+    company_profile,
+    dividends,
+    fast_info,
+    growth,
+    profitability,
+    valuation,
+)
 from yfinance.exceptions import YFException
 
 # ---------------------------------------------------------------------------
@@ -36,14 +46,14 @@ from yfinance.exceptions import YFException
 # ---------------------------------------------------------------------------
 
 _TABLE_MODULES = {
-    "analyst_consensus": tables.analyst_consensus,
-    "balance_sheet": tables.balance_sheet,
-    "company_profile": tables.company_profile,
-    "dividends": tables.dividends,
-    "fast_info": tables.fast_info,
-    "growth": tables.growth,
-    "profitability": tables.profitability,
-    "valuation": tables.valuation,
+    "analyst_consensus": analyst_consensus,
+    "balance_sheet": balance_sheet,
+    "company_profile": company_profile,
+    "dividends": dividends,
+    "fast_info": fast_info,
+    "growth": growth,
+    "profitability": profitability,
+    "valuation": valuation,
 }
 
 SUPPORTED_TABLES = tuple(_TABLE_MODULES)

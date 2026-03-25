@@ -186,7 +186,9 @@ class FundsData:
         result = self._fetch()
         data: Dict[str, Any] = {}
         try:
-            data = result["quoteSummary"]["result"][0]
+            quote_summary = (result or {}).get("quoteSummary") or {}
+            results = quote_summary.get("result") or []
+            data = results[0]
             self._quote_type = data["quoteType"]["quoteType"]
             if self._quote_type not in ("ETF", "MUTUALFUND"):
                 raise YFDataException(f"{self._symbol}: No Fund data found.")

@@ -786,14 +786,16 @@ class Quote:
                 period2=end,
                 query_host="query1",
             )
-            json_result = json_data.get("timeseries") or json_data.get("finance")
-            if json_result["error"] is not None:
+            json_result = json_data.get("timeseries") or json_data.get("finance") or {}
+            json_error = json_result.get("error")
+            if json_error is not None:
                 raise YFException(
                     "Failed to parse json response from Yahoo Finance: "
-                    + str(json_result["error"])
+                    + str(json_error)
                 )
+            results = json_result.get("result") or []
             for k in keys:
-                keydict = json_result["result"][0]
+                keydict = results[0]
                 if k in keydict:
                     self._info[k] = keydict[k][-1]["reportedValue"]["raw"]
                 else:
