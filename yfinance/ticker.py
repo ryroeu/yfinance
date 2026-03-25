@@ -29,7 +29,6 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 import pandas as _pd
 
 from .base import TickerBase
-from .constants import _BASE_URL_
 from .scrapers.funds import FundsData
 
 _DataFrameOrDict = Union[_pd.DataFrame, Dict[Any, Any]]
@@ -100,12 +99,7 @@ class Ticker(TickerBase):
 
     def _download_options(self, date=None):
         """Download option chain data for the provided expiration date."""
-        if date is None:
-            url = f"{_BASE_URL_}/v7/finance/options/{self.ticker}"
-        else:
-            url = f"{_BASE_URL_}/v7/finance/options/{self.ticker}?date={date}"
-
-        r = self._data.get(url=url).json()
+        r = self._data.subscription.fetch_options(self.ticker, date=date)
         if len(r.get('optionChain', {}).get('result', [])) > 0:
             for exp in r['optionChain']['result'][0]['expirationDates']:
                 self._expirations[_pd.Timestamp(exp, unit='s').strftime('%Y-%m-%d')] = exp

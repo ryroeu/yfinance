@@ -7,14 +7,10 @@ import warnings
 
 import curl_cffi
 
-from yfinance.constants import _QUERY1_URL_
 from yfinance.data import YfData
 
 from ..utils import dynamic_docstring, generate_list_table_from_dict_universal
 from .query import EquityQuery, FundQuery, QueryBase
-
-_SCREENER_URL_ = f"{_QUERY1_URL_}/v1/finance/screener"
-_PREDEFINED_URL_ = f"{_SCREENER_URL_}/predefined/saved"
 
 PREDEFINED_SCREENER_BODY_DEFAULTS = {
     "offset": 0,
@@ -395,7 +391,7 @@ def _run_predefined_query(query: str, request: _ScreenRequest, data: YfData) -> 
         if value is not None:
             params_dict[key] = value
 
-    response = data.get(url=_PREDEFINED_URL_, params=params_dict)
+    response = data.subscription.fetch_predefined_screener(params_dict)
     try:
         response.raise_for_status()
     except curl_cffi.requests.exceptions.HTTPError:
@@ -442,7 +438,7 @@ def _run_custom_query(query: QueryBase, request: _ScreenRequest, data: YfData) -
         post_query["quoteType"] = "MUTUALFUND"
 
     payload = dumps(post_query, separators=(",", ":"), ensure_ascii=False)
-    response = data.post(_SCREENER_URL_, data=payload, params=_base_params())
+    response = data.subscription.fetch_custom_screener(payload, params=_base_params())
     response.raise_for_status()
     return response.json()["finance"]["result"][0]
 

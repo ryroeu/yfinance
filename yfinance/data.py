@@ -88,6 +88,18 @@ class YfData(YahooAuthMixin, metaclass=SingletonMeta):
 
     def __init__(self, session=None):
         self._init_auth(session)
+        self._subscription_client = None
+
+    @property
+    def subscription(self):
+        """Return the endpoint client for subscription-capable Yahoo fetches."""
+        client = getattr(self, "_subscription_client", None)
+        if client is None:
+            from .subscription import SubscriptionClient
+
+            client = SubscriptionClient(self)
+            self._subscription_client = client
+        return client
 
     @utils.log_indent_decorator
     def get(self, url, params=None, timeout=30):

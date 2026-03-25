@@ -459,20 +459,14 @@ class TickerBase(TickerBaseLookupMixin):
             return None
         return cast(pd.Timestamp, start_value), cast(pd.Timestamp, end_value)
 
-    def _build_shares_url(self, start_date: pd.Timestamp, end_date: pd.Timestamp) -> str:
-        ts_url_base = (
-            "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/v1/finance/timeseries/"
-            f"{self.ticker}?symbol={self.ticker}"
-        )
-        return (
-            f"{ts_url_base}&period1={int(start_date.timestamp())}"
-            f"&period2={int(end_date.timestamp())}"
-        )
-
-    def _fetch_shares_payload(self, shares_url: str, logger):
+    def _fetch_shares_payload(self, start_date: pd.Timestamp, end_date: pd.Timestamp, logger):
         try:
-            response = self._data.cache_get(url=shares_url)
-            json_data = response.json()
+            json_data = self._data.subscription.fetch_fundamentals_timeseries(
+                self.ticker,
+                period1=int(start_date.timestamp()),
+                period2=int(end_date.timestamp()),
+                query_host="query2",
+            )
         except (_json.JSONDecodeError, AttributeError, requests.exceptions.RequestException):
             if YfConfig.debug.raise_on_error:
                 raise
@@ -521,8 +515,7 @@ class TickerBase(TickerBaseLookupMixin):
             return None
 
         start_date, end_date = date_bounds
-        shares_url = self._build_shares_url(start_date, end_date)
-        json_data = self._fetch_shares_payload(shares_url, logger)
+        json_data = self._fetch_shares_payload(start_date, end_date, logger)
         if json_data is None:
             return None
         return self._extract_shares_series(json_data, tz, logger)

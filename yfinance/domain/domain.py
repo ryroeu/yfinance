@@ -5,11 +5,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as _pd
 
-from ..constants import _QUERY1_URL_
 from ..data import YfData
 from ..ticker import Ticker
-
-_QUERY_URL_ = f"{_QUERY1_URL_}/v1/finance"
 
 
 class Domain(ABC):
@@ -76,7 +73,7 @@ class Domain(ABC):
             return []
         return self._research_reports
 
-    def _fetch(self, query_url: str) -> Dict[str, Any]:
+    def _fetch(self, resource: str) -> Dict[str, Any]:
         """Fetch raw JSON for a domain endpoint."""
         params_dict = {
             "formatted": "true",
@@ -84,8 +81,7 @@ class Domain(ABC):
             "lang": "en-US",
             "region": self._region,
         }
-        result = self._data.get_raw_json(query_url, params=params_dict)
-        return result
+        return self._data.subscription.fetch_domain(resource, params=params_dict)
 
     def _parse_and_assign_common(self, data: Dict[str, Any]) -> None:
         """Parse and cache common fields shared by sector and industry."""
@@ -131,9 +127,9 @@ class Domain(ABC):
             columns=top_companies_column,
         ).set_index("symbol")
 
-    def _fetch_common_data(self, query_url: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
+    def _fetch_common_data(self, resource: str) -> Tuple[Dict[str, Any], Dict[str, Any]]:
         """Fetch a domain payload and parse common fields."""
-        result = self._fetch(query_url)
+        result = self._fetch(resource)
         data = result["data"]
         self._parse_and_assign_common(data)
         return result, data

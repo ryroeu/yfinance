@@ -6,7 +6,6 @@ import pandas as pd
 
 from . import utils
 from .http.helpers import parse_json_response
-from .constants import _QUERY1_URL_
 from .data import YfData
 from .exceptions import YFDataException
 
@@ -51,8 +50,7 @@ class Lookup:
         self._cache = {}
 
     def _request_lookup(self, params: dict) -> dict:
-        url = f"{_QUERY1_URL_}/v1/finance/lookup"
-        data = self._data.get(url=url, params=params, timeout=self.timeout)
+        data = self._data.subscription.fetch_lookup(params, timeout=self.timeout)
         return parse_json_response(
             data,
             self._logger,

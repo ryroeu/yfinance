@@ -8,7 +8,7 @@ from ..config import YF_CONFIG as YfConfig
 from ..constants import SECTOR_INDUSTY_MAPPING_LC
 from ..utils import dynamic_docstring, generate_list_table_from_dict, get_yf_logger
 
-from .domain import Domain, _QUERY_URL_
+from .domain import Domain
 
 _PARSE_ERROR_TYPES = (KeyError, TypeError, ValueError)
 
@@ -19,7 +19,7 @@ class Sector(Domain):
     def __init__(self, key, session=None, region: str = "US"):
         """Initialize a sector by API key."""
         super().__init__(key, session, region)
-        self._query_url: str = f"{_QUERY_URL_}/sectors/{self._key}"
+        self._query_url: str = f"sectors/{self._key}"
         self._top_etfs: Optional[Dict[str, str]] = None
         self._top_mutual_funds: Optional[Dict[str, str]] = None
         self._industries: Optional[_pd.DataFrame] = None

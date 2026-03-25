@@ -12,7 +12,7 @@ import numpy as np
 import pandas as pd
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.constants import _BASE_URL_, _PRICE_COLNAMES_
+from yfinance.constants import _PRICE_COLNAMES_
 from yfinance.exceptions import (
     YFDataException,
     YFInvalidPeriodError,
@@ -222,15 +222,19 @@ def _log_request_params(state: _FetchState) -> None:
 
 
 def _fetch_chart_data(state: _FetchState) -> Optional[dict[str, Any]]:
-    url = f"{_BASE_URL_}/v8/finance/chart/{state.price_history.ticker}"
     data_client = state.history_obj.get_data_client()
-    get_fn = data_client.get
+    use_cache = False
     if state.end is not None:
         state.end_dt = _safe_timestamp(pd.Timestamp(state.end, unit="s").tz_localize("UTC"))
         if state.end_dt + _datetime.timedelta(minutes=30) <= pd.Timestamp.now("UTC"):
-            get_fn = data_client.cache_get
+            use_cache = True
     try:
-        response = get_fn(url=url, params=state.params, timeout=state.timeout)
+        response = data_client.subscription.fetch_chart(
+            state.price_history.ticker,
+            params=state.params,
+            timeout=state.timeout,
+            use_cache=use_cache,
+        )
         if response is None or "Will be right back" in response.text:
             raise YFDataException("*** YAHOO! FINANCE IS CURRENTLY DOWN! ***")
         data_json = response.json()

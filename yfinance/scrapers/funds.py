@@ -6,9 +6,9 @@ import pandas as pd
 
 from yfinance.http.helpers import log_response_payload
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.constants import _QUOTE_SUMMARY_URL_
 from yfinance.data import YfData
 from yfinance.exceptions import YFDataException
+from yfinance.scrapers.utils import fetch_quote_summary
 from .. import utils
 
 class FundsData:
@@ -173,18 +173,11 @@ class FundsData:
         Returns:
             dict: The raw JSON data.
         """
-        modules = ",".join(["quoteType", "summaryProfile", "topHoldings", "fundProfile"])
-        params_dict = {
-            "modules": modules,
-            "corsDomain": "finance.yahoo.com",
-            "symbol": self._symbol,
-            "formatted": "false",
-        }
-        result = self._data.get_raw_json(
-            f"{_QUOTE_SUMMARY_URL_}/{self._symbol}",
-            params=params_dict,
+        return fetch_quote_summary(
+            self._data,
+            self._symbol,
+            ["quoteType", "summaryProfile", "topHoldings", "fundProfile"],
         )
-        return result
 
     def _fetch_and_parse(self) -> None:
         """

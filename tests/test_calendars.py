@@ -2,6 +2,7 @@
 
 from datetime import datetime, timedelta, timezone
 import unittest
+from unittest.mock import Mock, patch
 
 import pandas as pd
 
@@ -62,6 +63,49 @@ class TestCalendars(unittest.TestCase):
 
         self.assertIsInstance(result, pd.DataFrame)
         self.assertEqual(len(result), 5)
+
+    def test_calendar_uses_subscription_visualization_client(self):
+        """Route calendar visualization fetches through the subscription client."""
+        mock_response = Mock()
+        mock_response.json.return_value = {
+            "finance": {
+                "result": [
+                    {
+                        "documents": [
+                            {
+                                "columns": [
+                                    {"label": "Symbol"},
+                                    {"label": "Company Name"},
+                                    {"label": "Event Start Date", "type": "DATE"},
+                                    {"label": "EPS Estimate"},
+                                    {"label": "Reported EPS"},
+                                    {"label": "Surprise (%)"},
+                                ],
+                                "rows": [[
+                                    "AAPL",
+                                    "Apple",
+                                    "2026-03-25T00:00:00Z",
+                                    1.0,
+                                    1.1,
+                                    10.0,
+                                ]],
+                            }
+                        ]
+                    }
+                ],
+                "error": None,
+            }
+        }
+
+        with patch.object(
+            self.calendars._data.subscription,
+            "fetch_calendar_visualization",
+            return_value=mock_response,
+        ) as fetch_visualization:
+            result = self.calendars.get_earnings_calendar(limit=1, force=True)
+
+        self.assertEqual(len(result), 1)
+        fetch_visualization.assert_called_once()
 
 
 if __name__ == "__main__":

@@ -1,7 +1,6 @@
 """Fundamentals and financial statement time-series scrapers."""
 
 import datetime
-import json
 import warnings
 from typing import Any, Optional
 
@@ -124,7 +123,7 @@ class Financials:
 
         try:
             return self._get_financials_time_series(timescale, keys)
-        except (KeyError, TypeError, ValueError, IndexError, json.JSONDecodeError):
+        except (KeyError, TypeError, ValueError, IndexError):
             if YfConfig.debug.raise_on_error:
                 raise
             return None
@@ -137,23 +136,23 @@ class Financials:
         }
         return mapping[timescale]
 
-    def _build_financials_url(self, timescale: str, keys: list[str]) -> str:
-        base_url = (
-            "https://query2.finance.yahoo.com/ws/fundamentals-timeseries/"
-            f"v1/finance/timeseries/{self._symbol}?symbol={self._symbol}"
-        )
-        statement_type = ",".join(timescale + key for key in keys)
+    def _build_financials_types(self, timescale: str, keys: list[str]) -> list[str]:
+        return [timescale + key for key in keys]
+
+    def _fetch_timeseries_result(
+        self,
+        timescale: str,
+        keys: list[str],
+    ) -> list[dict[str, Any]]:
         start_dt = datetime.datetime(2016, 12, 31)
         end = pd.Timestamp.now("UTC").ceil("D")
-        return (
-            f"{base_url}&type={statement_type}"
-            f"&period1={int(start_dt.timestamp())}"
-            f"&period2={int(end.timestamp())}"
+        json_data = self._data.subscription.fetch_fundamentals_timeseries(
+            self._symbol,
+            types=self._build_financials_types(timescale, keys),
+            period1=int(start_dt.timestamp()),
+            period2=int(end.timestamp()),
+            query_host="query2",
         )
-
-    def _fetch_timeseries_result(self, url: str) -> list[dict[str, Any]]:
-        json_str = self._data.cache_get(url=url).text
-        json_data = json.loads(json_str)
         data_raw = json_data["timeseries"]["result"]
         for item in data_raw:
             item.pop("meta", None)
@@ -193,9 +192,7 @@ class Financials:
     def _get_financials_time_series(self, timescale: str, keys: list[str]) -> pd.DataFrame:
         """Fetch and reshape one financial statement time series table."""
         translated_timescale = self._translate_timescale(timescale)
-        url = self._build_financials_url(translated_timescale, keys)
-
-        data_raw = self._fetch_timeseries_result(url)
+        data_raw = self._fetch_timeseries_result(translated_timescale, keys)
         timestamps, unpacked = self._unpack_timeseries_data(data_raw)
         table = self._build_table(unpacked, timestamps)
 

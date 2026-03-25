@@ -8,7 +8,6 @@ from curl_cffi import requests
 
 from . import cache, utils
 from .config import should_raise_on_error
-from .constants import _BASE_URL_
 
 _TZ_INFO_FETCH_CTR = {"count": 0}
 _TZ_FETCH_ERRORS = (
@@ -23,10 +22,14 @@ def fetch_ticker_tz(data_client, ticker: str, timeout) -> Optional[str]:
     """Fetch exchange timezone directly from Yahoo chart metadata."""
     logger = utils.get_yf_logger()
     params = {"range": "1d", "interval": "1d"}
-    url = f"{_BASE_URL_}/v8/finance/chart/{ticker}"
 
     try:
-        response = data_client.cache_get(url=url, params=params, timeout=timeout)
+        response = data_client.subscription.fetch_chart(
+            ticker,
+            params=params,
+            timeout=timeout,
+            use_cache=True,
+        )
         data = response.json()
     except _TZ_FETCH_ERRORS as error:
         if should_raise_on_error():

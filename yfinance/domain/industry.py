@@ -7,7 +7,7 @@ import pandas as _pd
 from .. import utils
 from ..config import YF_CONFIG as YfConfig
 
-from .domain import Domain, _QUERY_URL_
+from .domain import Domain
 
 _PARSE_ERROR_TYPES = (KeyError, TypeError, ValueError)
 
@@ -18,7 +18,7 @@ class Industry(Domain):
     def __init__(self, key, session=None, region: str = "US"):
         """Initialize an industry by API key."""
         super().__init__(key, session, region)
-        self._query_url = f"{_QUERY_URL_}/industries/{self._key}"
+        self._query_url = f"industries/{self._key}"
 
         self._sector_key: Optional[str] = None
         self._sector_name: Optional[str] = None

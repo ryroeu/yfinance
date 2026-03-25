@@ -25,7 +25,6 @@ from frozendict import frozendict
 
 from . import utils
 from .http.helpers import parse_json_response
-from .constants import _BASE_URL_
 from .data import YfData
 
 
@@ -121,7 +120,6 @@ class Search:
 
     def search(self) -> 'Search':
         """Search using the query parameters defined in the constructor."""
-        url = f"{_BASE_URL_}/v1/finance/search"
         raw_params = {
             "q": self._config["query"],
             "quotesCount": self._config["max_results"],
@@ -144,7 +142,10 @@ class Search:
             dict(params),
         )
 
-        response = self._data.cache_get(url=url, params=params, timeout=self._config["timeout"])
+        response = self._data.subscription.fetch_search(
+            params,
+            timeout=self._config["timeout"],
+        )
         data = parse_json_response(
             response,
             self._logger,

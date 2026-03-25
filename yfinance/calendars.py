@@ -11,7 +11,6 @@ import numpy as np
 import pandas as pd
 from requests import Response, Session, exceptions
 
-from .constants import _QUERY1_URL_
 from .utils import log_indent_decorator, get_yf_logger, _parse_user_dt
 from .screener import client as screener_client
 from .data import YfData
@@ -79,8 +78,6 @@ class CalendarQuery:
             "operands": [o.to_dict() if isinstance(o, CalendarQuery) else o for o in ops],
         }
 
-
-_CALENDAR_URL_ = f"{_QUERY1_URL_}/v1/finance/visualization"
 DATE_STR_FORMAT = "%Y-%m-%d"
 
 PREDEFINED_CALENDARS = {
@@ -342,7 +339,10 @@ class Calendars:
         self._cache_request_body[calendar_type] = body
 
         self._logger.debug("Fetching calendar_type=%s with limit=%s", calendar_type, limit)
-        response: Response = self._data.post(_CALENDAR_URL_, params=params, body=body)
+        response: Response = self._data.subscription.fetch_calendar_visualization(
+            body,
+            params=params,
+        )
 
         try:
             json_data = response.json()

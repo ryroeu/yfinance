@@ -14,7 +14,6 @@ import numpy as np
 import pandas as pd
 
 from . import utils
-from .constants import _QUERY1_URL_, _ROOT_URL_
 from .exceptions import YFEarningsDateMissing
 from .http.helpers import parse_json_response
 
@@ -265,15 +264,11 @@ class TickerBaseLookupMixin:
             valid_tabs = ", ".join(tab_queryrefs.keys())
             raise ValueError(f"Invalid tab name '{tab}'. Choose from: {valid_tabs}")
 
-        url = f"{_ROOT_URL_}/xhr/ncp?queryRef={query_ref}&serviceKey=ncp_fin"
-        payload = {
-            "serviceConfig": {
-                "snippetCount": count,
-                "s": [self.ticker],
-            }
-        }
-
-        data = self._data.post(url, body=payload)
+        data = self._data.subscription.fetch_news_stream(
+            self.ticker,
+            count=count,
+            query_ref=query_ref,
+        )
         data = parse_json_response(
             data,
             logger,
@@ -336,11 +331,11 @@ class TickerBaseLookupMixin:
         else:
             raise ValueError("Please use limit <= 100")
 
-        url = (
-            f"https://finance.yahoo.com/calendar/earnings?symbol={self.ticker}"
-            f"&offset={offset}&size={size}"
+        response = self._data.subscription.fetch_earnings_calendar_page(
+            self.ticker,
+            offset=offset,
+            size=size,
         )
-        response = self._data.cache_get(url)
 
         soup = BeautifulSoup(response.text, "html.parser")
         table = soup.find("table")
@@ -383,7 +378,6 @@ class TickerBaseLookupMixin:
         """
         logger = utils.get_yf_logger()
 
-        url = f"{_QUERY1_URL_}/v1/finance/visualization"
         params = {"lang": "en-US", "region": "US"}
         body = {
             "size": limit,
@@ -400,7 +394,7 @@ class TickerBaseLookupMixin:
                 "eventtype",
             ],
         }
-        response = self._data.post(url, params=params, body=body)
+        response = self._data.subscription.fetch_visualization(body, params=params)
         json_data = response.json()
 
         columns = [

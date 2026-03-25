@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from curl_cffi import requests
 
 from yfinance.config import YF_CONFIG as YfConfig
-from yfinance.constants import quote_summary_valid_modules, _QUERY1_URL_, _ROOT_URL_
+from yfinance.constants import quote_summary_valid_modules
 from yfinance.data import YfData
 from yfinance.exceptions import YFDataException, YFException
 from yfinance.scrapers.utils import fetch_quote_summary, get_raw_json_or_none
@@ -664,11 +664,8 @@ class Quote:
 
     def _fetch_additional_info(self) -> Optional[dict[str, Any]]:
         """Fetch quote-response fields that complement quote-summary modules."""
-        params_dict = {"symbols": self._symbol, "formatted": "false"}
         return get_raw_json_or_none(
-            self._data,
-            f"{_QUERY1_URL_}/v7/finance/quote?",
-            params_dict,
+            lambda: self._data.subscription.fetch_quote_response(self._symbol)
         )
 
     def _extract_query_info_section(
@@ -778,20 +775,17 @@ class Quote:
 
         keys = {"trailingPegRatio"}
         if keys:
-            url = (
-                "https://query1.finance.yahoo.com/ws/fundamentals-timeseries"
-                f"/v1/finance/timeseries/{self._symbol}?symbol={self._symbol}"
-            )
-            for k in keys:
-                url += "&type=" + k
             start = pd.Timestamp.now("UTC").floor("D") - datetime.timedelta(days=365 // 2)
             start = int(start.timestamp())
             end = pd.Timestamp.now("UTC").ceil("D")
             end = int(end.timestamp())
-            url += f"&period1={start}&period2={end}"
-
-            json_str = self._data.cache_get(url=url).text
-            json_data = json.loads(json_str)
+            json_data = self._data.subscription.fetch_fundamentals_timeseries(
+                self._symbol,
+                types=sorted(keys),
+                period1=start,
+                period2=end,
+                query_host="query1",
+            )
             json_result = json_data.get("timeseries") or json_data.get("finance")
             if json_result["error"] is not None:
                 raise YFException(
@@ -824,9 +818,8 @@ class Quote:
         values: dict[str, Optional[float]] = {}
         for key in labels_by_key:
             values[key] = None
-        url = f"{_ROOT_URL_}/quote/{self._symbol}/key-statistics/"
         try:
-            response = self._data.cache_get(url=url)
+            response = self._data.subscription.fetch_key_statistics_page(self._symbol)
             soup = BeautifulSoup(response.text, "html.parser")
             section = soup.find("section", {"data-testid": "qsp-statistics"})
             if section is None:

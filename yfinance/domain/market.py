@@ -7,7 +7,6 @@ from frozendict import frozendict
 
 from ..http.helpers import parse_json_response
 from ..config import YF_CONFIG as YfConfig
-from ..constants import _QUERY1_URL_
 from ..data import YfData, utils
 
 _PARSE_ERROR_TYPES = (IndexError, KeyError, TypeError, ValueError)
@@ -28,9 +27,21 @@ class Market:
         self._status: Optional[Dict[str, Any]] = None
         self._summary: Optional[Dict[str, Any]] = None
 
-    def _fetch_json(self, url: str, params: Dict[str, Any]) -> Dict[str, Any]:
+    def _fetch_json(self, endpoint: str, params: Dict[str, Any]) -> Dict[str, Any]:
         """Fetch JSON for a market endpoint and handle Yahoo downtime pages."""
-        data = self._data.cache_get(url=url, params=frozendict(params), timeout=self.timeout)
+        frozen_params = frozendict(params)
+        if endpoint == "summary":
+            data = self._data.subscription.fetch_market_summary(
+                frozen_params,
+                timeout=self.timeout,
+            )
+        elif endpoint == "status":
+            data = self._data.subscription.fetch_market_time(
+                frozen_params,
+                timeout=self.timeout,
+            )
+        else:
+            raise ValueError(f"Unknown market endpoint: {endpoint}")
         return parse_json_response(
             data,
             self._logger,
@@ -45,7 +56,6 @@ class Market:
 
         self._logger.debug("%s: Parsing market data", self.market)
 
-        summary_url = f"{_QUERY1_URL_}/v6/finance/quote/marketSummary"
         summary_fields = [
             "shortName",
             "regularMarketPrice",
@@ -59,7 +69,6 @@ class Market:
             "market": self.market,
         }
 
-        status_url = f"{_QUERY1_URL_}/v6/finance/markettime"
         status_params = {
             "formatted": True,
             "key": "finance",
@@ -67,8 +76,8 @@ class Market:
             "market": self.market,
         }
 
-        summary_payload = self._fetch_json(summary_url, summary_params)
-        status_payload = self._fetch_json(status_url, status_params)
+        summary_payload = self._fetch_json("summary", summary_params)
+        status_payload = self._fetch_json("status", status_params)
         self._summary = summary_payload
         self._status = status_payload
 
