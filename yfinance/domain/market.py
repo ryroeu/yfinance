@@ -5,7 +5,7 @@ from typing import Any, Dict, Optional
 
 from frozendict import frozendict
 
-from ..http import parse_json_response
+from ..http.helpers import parse_json_response
 from ..config import YF_CONFIG as YfConfig
 from ..constants import _QUERY1_URL_
 from ..data import YfData, utils

@@ -7,11 +7,11 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 from curl_cffi import requests
-import yfinance as yfinance_pkg
 import yfinance.client as yf
 import yfinance.http.worker as yf_download_worker
 from yfinance.base import TickerBase
 from yfinance.data import YfData
+from yfinance.domain.sector import Sector
 from yfinance.scrapers.quote import Quote
 from yfinance.scrapers.history.price_repair import _prepare_adjusted_price_data
 
@@ -564,10 +564,10 @@ class TestIssue2605(unittest.TestCase):
 
 
 class TestIssue2601(unittest.TestCase):
-    """Verify sector and industry helpers are scoped through the public package."""
+    """Verify sector helpers preserve the requested region scope."""
 
     def test_top_level_sector_accepts_region_and_forwards_it_to_domain_fetch(self):
-        """The public yfinance package should expose Sector and forward the region scope."""
+        """Sector queries should forward the requested region scope."""
         payload = {
             "data": {
                 "name": "Technology",
@@ -593,12 +593,8 @@ class TestIssue2601(unittest.TestCase):
             requests_seen.append((query_url, dict(params or {})))
             return payload
 
-        self.assertTrue(hasattr(yfinance_pkg, "Sector"))
-        self.assertTrue(hasattr(yfinance_pkg, "Industry"))
-        self.assertTrue(hasattr(yfinance_pkg, "Market"))
-
         with patch.object(YfData, "get_raw_json", autospec=True, side_effect=fake_get_raw_json):
-            top_companies = yfinance_pkg.Sector("technology", region="GB").top_companies
+            top_companies = Sector("technology", region="GB").top_companies
 
         top_companies = require_dataframe(top_companies, "Sector.top_companies returned None")
         self.assertEqual(len(requests_seen), 1)

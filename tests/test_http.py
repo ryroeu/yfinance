@@ -3,7 +3,7 @@
 import unittest
 from unittest.mock import Mock
 
-from yfinance.http import parse_json_response
+from yfinance.http.helpers import parse_json_response
 from yfinance.exceptions import YFDataException
 
 

@@ -4,7 +4,7 @@ from typing import Any
 
 import pandas as pd
 
-import yfinance as yf
+import yfinance.client as yf
 
 from ._helpers import build_populator, build_saver
 

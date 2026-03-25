@@ -16,7 +16,7 @@ import pandas as pd
 from . import utils
 from .constants import _QUERY1_URL_, _ROOT_URL_
 from .exceptions import YFEarningsDateMissing
-from .http import parse_json_response
+from .http.helpers import parse_json_response
 
 _BUSINESS_INSIDER_ROW_RE = _re.compile(
     r'new Array\("((?:[^"\\]|\\.)*)", "((?:[^"\\]|\\.)*)", '

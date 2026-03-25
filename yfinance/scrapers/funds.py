@@ -4,7 +4,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-from yfinance.http import log_response_payload
+from yfinance.http.helpers import log_response_payload
 from yfinance.config import YF_CONFIG as YfConfig
 from yfinance.constants import _QUOTE_SUMMARY_URL_
 from yfinance.data import YfData

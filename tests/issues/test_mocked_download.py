@@ -12,13 +12,12 @@ from unittest.mock import Mock, patch
 
 import pandas as pd
 import requests
-import yfinance as yfinance_pkg
 import yfinance.client as yf
 import yfinance.http.worker as yf_download_worker
 from yfinance.config import YF_CONFIG
 from yfinance.data import YfData
-from yfinance.exceptions import YFException, YFPricesMissingError, YFTzMissingError
-from yfinance.scrapers.history import PriceHistory
+from yfinance.exceptions import YFDataException, YFException, YFPricesMissingError, YFTzMissingError
+from yfinance.scrapers.history.client import PriceHistory
 from yfinance.utils_doc import ProgressBar
 
 from ..close_candidates_support import call_private, require_dataframe, require_datetime_index
@@ -231,7 +230,7 @@ class TestIssue2486(unittest.TestCase):
         caching_session.cache = object()
 
         with self.assertRaisesRegex(
-            yfinance_pkg.YFDataException,
+            YFDataException,
             "request_cache sessions don't work with curl_cffi",
         ):
             YfData(session=caching_session)
@@ -739,7 +738,7 @@ class TestIssue1819(unittest.TestCase):
             patch("sys.stderr", None),
         ):
             try:
-                result = yfinance_pkg.download("AAPL", period="1d", progress=True)
+                result = yf.download("AAPL", period="1d", progress=True)
             except AttributeError as exc:
                 self.fail(
                     f"download() with progress=True raised AttributeError with stderr=None: {exc}"

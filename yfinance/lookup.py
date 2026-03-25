@@ -5,7 +5,7 @@ import time
 import pandas as pd
 
 from . import utils
-from .http import parse_json_response
+from .http.helpers import parse_json_response
 from .constants import _QUERY1_URL_
 from .data import YfData
 from .exceptions import YFDataException

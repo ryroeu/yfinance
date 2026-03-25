@@ -4,7 +4,7 @@ import sqlite3
 import time
 from typing import Any, Callable, Collection, Dict, Mapping, Sequence
 
-import yfinance as yf
+import yfinance.client as yf
 from yfinance.exceptions import YFException
 from yfinance.sql._db import get_connection
 
