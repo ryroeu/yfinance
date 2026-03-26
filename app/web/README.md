@@ -1,3 +1,9 @@
+Install the optional web dependencies first:
+
+```bash
+pip install -e .[web]
+```
+
 Start it with:
 
 uvicorn app.web.app:app --reload

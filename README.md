@@ -44,6 +44,12 @@ $ cd yfinance
 $ pip install -e .
 ```
 
+To run the FastAPI web app, install the optional web dependencies:
+
+``` {.sourceCode .bash}
+$ pip install -e .[web]
+```
+
 ---
 
 ## App
@@ -57,6 +63,9 @@ python app/main.py
 Run in browser
 
 ``` {.sourceCode .bash}
+# Install web app dependencies first:
+pip install -e .[web]
+
 # Start it with:
 uvicorn app.web.app:app --reload
 
