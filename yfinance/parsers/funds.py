@@ -1,4 +1,4 @@
-"""Scraper for ETF and mutual-fund-specific quote summary data."""
+"""Parser for ETF and mutual-fund-specific quote summary data."""
 
 from typing import Any, Dict, Optional
 
@@ -9,7 +9,8 @@ from yfinance.config import YF_CONFIG as YfConfig
 from yfinance.data import YfData
 from yfinance.exceptions import YFDataException
 from yfinance.scrapers.utils import fetch_quote_summary
-from .. import utils
+from yfinance import utils
+
 
 class FundsData:
     """

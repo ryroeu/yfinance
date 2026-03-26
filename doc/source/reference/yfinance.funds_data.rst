@@ -2,7 +2,7 @@
 `FundsData` class
 ====================
 
-.. currentmodule:: yfinance.scrapers.funds
+.. currentmodule:: yfinance.parsers.funds
 
 .. autosummary::
    :toctree: api/

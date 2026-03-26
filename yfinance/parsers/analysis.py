@@ -1,4 +1,4 @@
-"""Analysis scraper for analyst and earnings-trend data."""
+"""Analysis parser for analyst and earnings-trend data."""
 
 from typing import Any, Dict, List, Optional
 
@@ -13,7 +13,7 @@ class Analysis:
     """Fetch and cache ticker analysis datasets from quoteSummary."""
 
     def __init__(self, data: YfData, symbol: str):
-        """Initialize analysis scraper state."""
+        """Initialize analysis parser state."""
         self._data = data
         self._symbol = symbol
         self._cache: Dict[str, Any] = {

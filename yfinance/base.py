@@ -13,12 +13,12 @@ from .base_lookup import TickerBaseLookupMixin
 from .config import YF_CONFIG as YfConfig
 from .constants import _MIC_TO_YAHOO_SUFFIX
 from .data import YfData
+from .parsers.analysis import Analysis
+from .parsers.fundamentals import Fundamentals
+from .parsers.funds import FundsData
+from .parsers.holders import Holders
 from .ws.client import WebSocket
-from .scrapers.analysis import Analysis
-from .scrapers.fundamentals import Fundamentals
-from .scrapers.funds import FundsData
 from .scrapers.history.client import PriceHistory
-from .scrapers.holders import Holders
 from .scrapers.quote import FastInfo, Quote
 from .utils_tz import fetch_ticker_tz, get_ticker_tz
 

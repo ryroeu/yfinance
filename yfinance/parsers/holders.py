@@ -1,4 +1,4 @@
-"""Holders and insider-activity scraper helpers."""
+"""Holders and insider-activity parser helpers."""
 
 from typing import Any, cast
 
@@ -26,7 +26,7 @@ class Holders:
     )
 
     def __init__(self, data: YfData, symbol: str):
-        """Initialize holders scraper state."""
+        """Initialize holders parser state."""
         self._data = data
         self._symbol = symbol
         self._tables: dict[str, pd.DataFrame | None] = {

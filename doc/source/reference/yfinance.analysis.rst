@@ -56,7 +56,7 @@ Holdings
    funds_data
 
 .. seealso::
-   :meth:`yfinance.scrapers.funds.FundsData`
+   :class:`yfinance.parsers.funds.FundsData`
 
 .. autosummary::
    :toctree: api/

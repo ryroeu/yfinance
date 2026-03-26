@@ -32,8 +32,8 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from yfinance.exceptions import YFNotImplementedError
-from yfinance.scrapers.analysis import Analysis
-from yfinance.scrapers.fundamentals import Fundamentals
+from yfinance.parsers.analysis import Analysis
+from yfinance.parsers.fundamentals import Fundamentals
 
 
 def _make_mock_yfdata() -> MagicMock:

@@ -144,7 +144,7 @@ class TestIssue2699(unittest.TestCase):
             }
         }
 
-        with patch("yfinance.scrapers.analysis.fetch_quote_summary", return_value=payload):
+        with patch("yfinance.parsers.analysis.fetch_quote_summary", return_value=payload):
             estimate = yf.Ticker("TM").earnings_estimate
 
         estimate = require_dataframe(estimate, "Ticker.earnings_estimate returned None")

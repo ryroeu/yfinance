@@ -29,7 +29,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 import pandas as _pd
 
 from .base import TickerBase
-from .scrapers.funds import FundsData
+from .parsers.funds import FundsData
 
 _DataFrameOrDict = Union[_pd.DataFrame, Dict[Any, Any]]
 _OptionalDataFrameOrDict = Optional[_DataFrameOrDict]

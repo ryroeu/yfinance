@@ -1,4 +1,4 @@
-"""Fundamentals and financial statement time-series scrapers."""
+"""Fundamentals and financial statement time-series parsers."""
 
 import datetime
 import warnings
@@ -9,15 +9,15 @@ import pandas as pd
 from yfinance.config import YF_CONFIG as YfConfig
 from yfinance.data import YfData
 from yfinance.exceptions import YFException, YFNotImplementedError
-from .. import utils
-from ..constants import fundamentals_keys
+from yfinance import utils
+from yfinance.constants import fundamentals_keys
 
 
 class Fundamentals:
     """Entry point for fundamentals-related ticker datasets."""
 
     def __init__(self, data: YfData, symbol: str):
-        """Initialize fundamentals scraper."""
+        """Initialize fundamentals parser."""
         self._data = data
         self._symbol = symbol
         self._financials: "Financials" = Financials(data, symbol)
@@ -40,7 +40,7 @@ class Fundamentals:
 
     @property
     def shares(self) -> pd.DataFrame:
-        """Shares are not currently implemented on this scraper."""
+        """Shares are not currently implemented on this parser."""
         raise YFNotImplementedError("shares")
 
 
