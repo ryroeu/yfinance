@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yahoo Finance Viewer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body>
+
+  <nav class="topnav">
+    <div class="nav-inner">
+      <div class="nav-brand">
+        <span class="y-badge">Y!</span>
+        <span class="nav-product">Finance</span>
+      </div>
+    </div>
+  </nav>
+
+  <main>
+    <header>
+      <h1>Stock Data Viewer</h1>
+      <p>Powered by Yahoo Finance data</p>
+    </header>
+
+    <div class="search-bar">
+      <div class="search-wrap">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input id="symbolInput" type="text" placeholder="Search symbol (e.g. AAPL, MSFT)" autocomplete="off" />
+      </div>
+      <button id="searchBtn">Search</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="results">
+      <div class="symbol-header">
+        <div class="ticker" id="tickerLabel"></div>
+        <div class="company-name" id="companyName"></div>
+      </div>
+      <div class="grid" id="grid"></div>
+    </div>
+  </main>
+
+  <footer>
+    <p>Data provided by Yahoo Finance &middot; For informational purposes only</p>
+  </footer>
+
+  <script>
+    const TABLE_LABELS = {
+      fast_info:          "Fast Info",
+      analyst_consensus:  "Analyst Consensus",
+      balance_sheet:      "Balance Sheet",
+      company_profile:    "Company Profile",
+      dividends:          "Dividends",
+      growth:             "Growth",
+      profitability:      "Profitability",
+      valuation:          "Valuation",
+    };
+
+    const PCT_KEYS = new Set([
+      "dividendYield","trailingAnnualDividendYield","fiveYearAvgDividendYield",
+      "payoutRatio","profitMargins","grossMargins","operatingMargins","ebitdaMargins",
+      "returnOnEquity","returnOnAssets","revenueGrowth","earningsGrowth",
+      "earningsQuarterlyGrowth","yearChange",
+    ]);
+
+    const BIG_KEYS = new Set([
+      "marketCap","enterpriseValue","ebitda","totalCash","totalDebt","sharesOutstanding",
+    ]);
+
+    const DATE_KEYS = new Set(["lastDividendDate","exDividendDate"]);
+
+    const input      = document.getElementById("symbolInput");
+    const btn        = document.getElementById("searchBtn");
+    const status     = document.getElementById("status");
+    const results    = document.getElementById("results");
+    const grid       = document.getElementById("grid");
+    const tickerLabel = document.getElementById("tickerLabel");
+    const companyName = document.getElementById("companyName");
+
+    function formatValue(key, val) {
+      if (val === null || val === undefined) return { text: "—", cls: "null" };
+
+      if (PCT_KEYS.has(key) && typeof val === "number") {
+        const pct = val * 100;
+        const cls = pct > 0 ? "positive" : pct < 0 ? "negative" : "";
+        const prefix = pct > 0 ? "+" : "";
+        return { text: prefix + pct.toFixed(2) + "%", cls };
+      }
+
+      if (BIG_KEYS.has(key) && typeof val === "number") {
+        return { text: formatLargeNumber(val) };
+      }
+
+      if (DATE_KEYS.has(key) && typeof val === "number") {
+        return { text: new Date(val * 1000).toLocaleDateString() };
+      }
+
+      if (typeof val === "number") {
+        return { text: Number.isInteger(val) ? val.toLocaleString() : val.toFixed(4) };
+      }
+
+      return { text: String(val) };
+    }
+
+    function formatLargeNumber(n) {
+      if (Math.abs(n) >= 1e12) return (n / 1e12).toFixed(2) + "T";
+      if (Math.abs(n) >= 1e9)  return (n / 1e9).toFixed(2) + "B";
+      if (Math.abs(n) >= 1e6)  return (n / 1e6).toFixed(2) + "M";
+      return n.toLocaleString();
+    }
+
+    function toLabel(key) {
+      return key.replace(/([A-Z])/g, " $1").replace(/^./, s => s.toUpperCase());
+    }
+
+    function buildCard(tableKey, tableData) {
+      const card = document.createElement("div");
+      card.className = "card";
+
+      const title = document.createElement("div");
+      title.className = "card-title";
+      title.textContent = TABLE_LABELS[tableKey] || tableKey;
+      card.appendChild(title);
+
+      const body = document.createElement("div");
+      body.className = "card-body";
+
+      if (tableData.status === "error") {
+        card.classList.add("error");
+        body.textContent = tableData.error;
+      } else {
+        const data = tableData.data;
+        for (const [key, val] of Object.entries(data)) {
+          if (key === "symbol") continue;
+
+          const row = document.createElement("div");
+          row.className = "row";
+
+          const label = document.createElement("span");
+          label.className = "label";
+          label.textContent = toLabel(key);
+
+          const value = document.createElement("span");
+          value.className = "value";
+          const { text, cls } = formatValue(key, val);
+          value.textContent = text;
+          if (cls) value.classList.add(cls);
+
+          row.appendChild(label);
+          row.appendChild(value);
+          body.appendChild(row);
+        }
+      }
+
+      card.appendChild(body);
+      return card;
+    }
+
+    async function search() {
+      const symbol = input.value.trim().toUpperCase();
+      if (!symbol) return;
+
+      btn.disabled = true;
+      status.className = "";
+      status.innerHTML = '<div class="spinner"></div>';
+      results.style.display = "none";
+      grid.innerHTML = "";
+
+      try {
+        const res = await fetch(`/api/stock/${encodeURIComponent(symbol)}`);
+        const json = await res.json();
+
+        tickerLabel.textContent = json.symbol;
+        const profileData = json.tables.company_profile?.data;
+        companyName.textContent = profileData?.longName || "";
+
+        for (const [tableKey, tableData] of Object.entries(json.tables)) {
+          grid.appendChild(buildCard(tableKey, tableData));
+        }
+
+        status.innerHTML = "";
+        results.style.display = "block";
+      } catch (err) {
+        status.className = "error";
+        status.textContent = "Failed to fetch data. Is the server running?";
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    btn.addEventListener("click", search);
+    input.addEventListener("keydown", e => { if (e.key === "Enter") search(); });
+  </script>
+</body>
+</html>
