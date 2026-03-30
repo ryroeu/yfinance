@@ -17,15 +17,16 @@ except ModuleNotFoundError:
         sys.path.insert(0, str(ROOT))
     from yfinance.sql.client import FETCH_ERRORS, SUPPORTED_TABLES, fetch
 
+_DIST = Path(__file__).parent / "dist"
+
 app = FastAPI()
-app.mount("/static", StaticFiles(directory=Path(__file__).parent / "static"), name="static")
+app.mount("/assets", StaticFiles(directory=_DIST / "assets"), name="assets")
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index():
-    """Serve the main HTML page for the stock viewer."""
-    html = (Path(__file__).parent / "templates" / "index.html").read_text()
-    return HTMLResponse(content=html)
+    """Serve the Vite-built index.html."""
+    return HTMLResponse(content=(_DIST / "index.html").read_text())
 
 
 @app.get("/api/stock/{symbol}")

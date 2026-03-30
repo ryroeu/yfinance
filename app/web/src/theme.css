@@ -13,9 +13,7 @@
   --text:         #EDF0F4;
   --text-muted:   #8C8FA3;
   --green:        #00C805;
-  --green-dim:    #00501A;
   --red:          #F33A3A;
-  --red-dim:      #4A0A0A;
   --radius:       6px;
   --font:         'Inter', system-ui, sans-serif;
 }
@@ -29,7 +27,7 @@ body {
   flex-direction: column;
 }
 
-/* ── Top navigation ─────────────────────────────────────── */
+/* ── Top navigation ─────────────────────────────── */
 .topnav {
   background: var(--nav-bg);
   border-bottom: 1px solid var(--nav-border);
@@ -51,7 +49,6 @@ body {
   display: flex;
   align-items: baseline;
   gap: 0.35rem;
-  text-decoration: none;
 }
 
 .y-badge {
@@ -72,13 +69,13 @@ body {
   letter-spacing: -0.01em;
 }
 
-/* ── Main content ────────────────────────────────────────── */
+/* ── Main ───────────────────────────────────────── */
 main {
   flex: 1;
   padding: 2.5rem 1rem 3rem;
 }
 
-/* ── Header ──────────────────────────────────────────────── */
+/* ── Header ─────────────────────────────────────── */
 header {
   text-align: center;
   margin-bottom: 2.5rem;
@@ -88,7 +85,6 @@ header h1 {
   font-size: 1.7rem;
   font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--text);
 }
 
 header p {
@@ -97,12 +93,12 @@ header p {
   margin-top: 0.35rem;
 }
 
-/* ── Search bar ──────────────────────────────────────────── */
+/* ── Search bar ─────────────────────────────────── */
 .search-bar {
   display: flex;
   gap: 0.5rem;
   max-width: 520px;
-  margin: 0 auto 2.5rem;
+  margin: 0 auto 2rem;
 }
 
 .search-wrap {
@@ -119,7 +115,6 @@ header p {
   height: 16px;
   color: var(--text-muted);
   pointer-events: none;
-  flex-shrink: 0;
 }
 
 .search-wrap input {
@@ -133,13 +128,9 @@ header p {
   padding: 0.65rem 1rem 0.65rem 2.5rem;
   outline: none;
   transition: border-color 0.15s, box-shadow 0.15s;
-  text-transform: uppercase;
 }
 
-.search-wrap input::placeholder {
-  text-transform: none;
-  color: var(--text-muted);
-}
+.search-wrap input::placeholder { color: var(--text-muted); }
 
 .search-wrap input:focus {
   border-color: var(--accent);
@@ -164,20 +155,21 @@ header p {
 .search-bar button:active { transform: scale(0.97); }
 .search-bar button:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
 
-/* ── Status / spinner ────────────────────────────────────── */
-#status {
-  text-align: center;
-  font-size: 0.88rem;
-  color: var(--text-muted);
+/* ── Status ─────────────────────────────────────── */
+.status-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
   min-height: 1.6rem;
   margin-bottom: 1.5rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
-#status.error { color: var(--red); }
+.status-error {
+  color: var(--red);
+  font-size: 0.88rem;
+}
 
+/* ── Spinner ─────────────────────────────────────── */
 .spinner {
   width: 22px;
   height: 22px;
@@ -189,9 +181,7 @@ header p {
 
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Symbol header ───────────────────────────────────────── */
-#results { display: none; }
-
+/* ── Symbol header ───────────────────────────────── */
 .symbol-header {
   text-align: center;
   margin-bottom: 2rem;
@@ -206,7 +196,6 @@ header p {
   font-size: 2.2rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  color: var(--text);
 }
 
 .symbol-header .company-name {
@@ -215,7 +204,7 @@ header p {
   margin-top: 0.25rem;
 }
 
-/* ── Grid ────────────────────────────────────────────────── */
+/* ── Grid ────────────────────────────────────────── */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
@@ -224,7 +213,7 @@ header p {
   margin: 0 auto;
 }
 
-/* ── Cards ───────────────────────────────────────────────── */
+/* ── Cards ───────────────────────────────────────── */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -251,7 +240,7 @@ header p {
 
 .card-body { padding: 0.4rem 0; }
 
-/* ── Rows ────────────────────────────────────────────────── */
+/* ── Rows ────────────────────────────────────────── */
 .row {
   display: flex;
   justify-content: space-between;
@@ -264,11 +253,7 @@ header p {
 
 .row:hover { background: var(--surface2); }
 
-.row .label {
-  color: var(--text-muted);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
+.row .label { color: var(--text-muted); white-space: nowrap; flex-shrink: 0; }
 
 .row .value {
   font-weight: 500;
@@ -281,7 +266,7 @@ header p {
 .row .value.positive { color: var(--green); }
 .row .value.negative { color: var(--red); }
 
-/* ── Card error state ────────────────────────────────────── */
+/* ── Card error state ────────────────────────────── */
 .card.error .card-title {
   border-bottom-color: var(--red);
   color: var(--red);
@@ -294,19 +279,11 @@ header p {
   font-style: italic;
 }
 
-/* ── Footer ──────────────────────────────────────────────── */
+/* ── Footer ──────────────────────────────────────── */
 footer {
   text-align: center;
   padding: 1.25rem 1rem;
   border-top: 1px solid var(--border);
   color: var(--text-muted);
   font-size: 0.78rem;
-  letter-spacing: 0.01em;
 }
-
-footer a {
-  color: var(--accent-hover);
-  text-decoration: none;
-}
-
-footer a:hover { text-decoration: underline; }

@@ -1,6 +1,7 @@
 __pycache__/*
 yfinance/__pycache__/*
 dist
+node_modules/
 yfinance.egg-info
 *.pyc
 .coverage
